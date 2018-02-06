@@ -12,5 +12,6 @@ setup(
     include_package_data=True,
     install_requires=[
         'opencv-contrib-python',
+        'imutils',
     ],
 )
