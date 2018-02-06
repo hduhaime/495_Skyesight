@@ -106,7 +106,7 @@ namespace KinectSnapshot
 
                 string myPhotos = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures);
 
-                string path = Path.Combine(myPhotos, "KinectSnapshot-" + time + ".jpeg");
+                string path = Path.Combine(myPhotos, "KinectSnapshot-" + time + ".jpg");
 
                 // write the new file to disk
                 try
