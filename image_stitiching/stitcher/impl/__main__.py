@@ -7,8 +7,15 @@ class Stitcher:
         (imageL, imageM, imageR) = images
         ratio = 0.75
         reprojThresh = 4.0
-        
+
         canvas_dim = max(imageM.shape[0], imageM.shape[1]) * len(images)
+
+        canvas = np.zeros((canvas_dim, canvas_dim, 3), np.uint8)
+
+        maskL = np.zeros((imageL.shape[0], imageL.shape[1]))
+        maskM = np.zeros((imageM.shape[0], imageM.shape[1]))
+        maskR = np.zeros((imageR.shape[0], imageR.shape[1]))
+        
 
         (kpL, ftL) = self.describe(imageL)
         (kpM, ftM) = self.describe(imageM)
@@ -17,21 +24,18 @@ class Stitcher:
         M1 = self.match(kpL, kpM, ftL, ftM, ratio, reprojThresh) 
         M2 = self.match(kpR, kpM, ftR, ftM, ratio, reprojThresh) 
 
-
         (matches, H1, status) = M1
         (matches, H2, status) = M2
 
-        
+        dst_dim = int(canvas_dim / 2)
 
-        resultA = cv2.warpPerspective(imageL, H1, (canvas_dim, canvas_dim))
-        resultB = cv2.warpPerspective(imageR, H2, (canvas_dim, canvas_dim))
+        resultA = cv2.warpPerspective(imageL, H1, (dst_dim, dst_dim))
+        resultB = cv2.warpPerspective(imageR, H2, (dst_dim, dst_dim))
 
-        
+        canvas[0:resultA.shape[0], 0:resultA.shape[1]] = resultA
+        canvas[0:resultB.shape[0], dst_dim:] = resultB
 
-        resultB[0:imageM.shape[0], 0:imageM.shape[1]] = imageM
-
-
-        return resultB
+        return canvas
 
     def describe(self, image):
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
