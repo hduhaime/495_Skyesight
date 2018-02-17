@@ -5,6 +5,8 @@ import os
 import argparse
 import imutils
 import cv2
+import code
+import sys
 from stitcher.impl.__main__ import Stitcher
 
 def main():
@@ -12,8 +14,8 @@ def main():
     ap.add_argument('-i', '--input-dir', required=True, help='Path to image input directory')
     args = vars(ap.parse_args())
 
-    input_dir = args['input_dir']
-
+    dir = args['input_dir'].strip(' ')
+    input_dir = os.path.join(os.getcwd(), dir)
     image_files = sorted(os.listdir(input_dir))
     image_files = [os.path.join(input_dir, x) for x in image_files]
     images = [imutils.resize(cv2.imread(x), width=400) for x in image_files]
