@@ -2,7 +2,6 @@ import cv2
 import numpy as np
 
 class Stitcher:
-
     def stitch(self, images):
         (imageL, imageM, imageR) = images
         ratio = 0.75
@@ -15,27 +14,37 @@ class Stitcher:
         maskL = np.zeros((imageL.shape[0], imageL.shape[1]))
         maskM = np.zeros((imageM.shape[0], imageM.shape[1]))
         maskR = np.zeros((imageR.shape[0], imageR.shape[1]))
-        
 
         (kpL, ftL) = self.describe(imageL)
         (kpM, ftM) = self.describe(imageM)
         (kpR, ftR) = self.describe(imageR)
 
-        M1 = self.match(kpL, kpM, ftL, ftM, ratio, reprojThresh) 
-        M2 = self.match(kpR, kpM, ftR, ftM, ratio, reprojThresh) 
-
-        (matches, H1, status) = M1
-        (matches, H2, status) = M2
-
         dst_dim = int(canvas_dim / 2)
+        shift = int(dst_dim - (imageM.shape[1] / 2)) 
+
+        (pts1, pts2) = self.match(kpL, kpM, ftL, ftM, ratio) 
+        (H1, status) = self.get_homography(pts1, pts2, shift, 0, reprojThresh)
+
+        (pts1, pts2) = self.match(kpR, kpM, ftR, ftM, ratio)
+        (H2, status) = self.get_homography(pts1, pts2, 0, 0, reprojThresh)
 
         resultA = cv2.warpPerspective(imageL, H1, (dst_dim, dst_dim))
         resultB = cv2.warpPerspective(imageR, H2, (dst_dim, dst_dim))
 
         canvas[0:resultA.shape[0], 0:resultA.shape[1]] = resultA
-        canvas[0:resultB.shape[0], dst_dim:] = resultB
+        resultB_start = shift
+        resultB_end = resultB_start + resultB.shape[1]
+        canvas[0:resultB.shape[0], resultB_start:resultB_end] = resultB
+        canvas[0:imageM.shape[0], shift:imageM.shape[1] + shift] = imageM
 
         return canvas
+
+    def get_homography(self, pts1, pts2, shift_x, shift_y, reprojThresh):
+        for pt in pts2:
+            pt[0] += shift_x
+            pt[1] += shift_y
+        return cv2.findHomography(pts1, pts2, cv2.RANSAC, reprojThresh)
+        
 
     def describe(self, image):
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -44,7 +53,7 @@ class Stitcher:
         keypoints = np.float32([kp.pt for kp in keypoints])
         return (keypoints, features)
 
-    def match(self, kp1, kp2, ft1, ft2, ratio, reprojThresh):
+    def match(self, kp1, kp2, ft1, ft2, ratio):
         matcher = cv2.DescriptorMatcher_create("BruteForce")
         rawMatches = matcher.knnMatch(ft1, ft2, 2)
         matches = []
@@ -55,8 +64,7 @@ class Stitcher:
         if len(matches) > 4:
             pts1 = np.float32([kp1[i] for (_, i) in matches])
             pts2 = np.float32([kp2[i] for (i, _) in matches])
-            (H, status) = cv2.findHomography(pts1, pts2, cv2.RANSAC, reprojThresh)
-            return (matches, H, status)
+            return (pts1, pts2)
 
         return None
 
