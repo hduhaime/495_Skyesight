@@ -3,6 +3,7 @@ import cv2
 from pykinect2 import PyKinectV2
 from pykinect2.PyKinectV2 import *
 from pykinect2 import PyKinectRuntime
+import code
 
 
 # Height and width passed in to resize to correct resolution
@@ -29,6 +30,9 @@ def get_kinect_frame(kinect, height, width):
 def get_webcam_frame(capture):
     ret, frame = capture.read()
     frame_to_display = cv2.cvtColor(frame, cv2.COLOR_BGR2BGRA)
+    if frame_to_display.shape[0] != 480:
+        frame_to_display = cv2.resize(frame_to_display, None, fx=0.444444, fy=0.444444)[:, 106:746, :]
+
     return cv2.flip(frame_to_display, 1)
 
 
@@ -43,13 +47,15 @@ def display_feeds(*args):
     else:
         # Concatenate images in list and scale them so that they all fit on screen
         image_to_show = cv2.resize(np.concatenate(arglist, axis=1), None, fx=0.6666, fy=0.6666)
+        image_to_show = cv2.cvtColor(image_to_show, cv2.COLOR_BGR2GRAY)
         cv2.imshow('frame', image_to_show)
 
 
 def main():
+
     # Get camera feeds
-    computer_webcam = cv2.VideoCapture(0)
-    attached_webcam = cv2.VideoCapture(1)
+    computer_webcam = cv2.VideoCapture(1)
+    attached_webcam = cv2.VideoCapture(2)
     kinect = PyKinectRuntime.PyKinectRuntime(PyKinectV2.FrameSourceTypes_Color)
 
     while(True):
