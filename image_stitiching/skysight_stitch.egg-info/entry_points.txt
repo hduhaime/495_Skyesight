@@ -1,0 +1,3 @@
+[console_scripts]
+stitch = stitcher.__main__:main
+

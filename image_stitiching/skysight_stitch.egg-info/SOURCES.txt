@@ -1,0 +1,8 @@
+skysight_stitch.egg-info/PKG-INFO
+skysight_stitch.egg-info/SOURCES.txt
+skysight_stitch.egg-info/dependency_links.txt
+skysight_stitch.egg-info/entry_points.txt
+skysight_stitch.egg-info/requires.txt
+skysight_stitch.egg-info/top_level.txt
+stitcher/__init__.py
+stitcher/__main__.py

@@ -2,59 +2,132 @@ import cv2
 import numpy as np
 
 class Stitcher:
+    def __init__(self):
+        self.imageL = None
+        self.imageM = None
+        self.imageR = None
+        self.shift = None
+        self.hmatL = None
+        self.hmatM = None
+        self.hmatR = None
+        self.ratio = 0.75
+        self.reprojThresh = 4.0
+
+    def prepare_for_calibration(self, img):
+
+
+        #Canny
+        #output.append(cv2.Canny(images, 100, 200)
+        #Normalization
+        gray = cv2.cvtColor(img, cv2.COLOR_BGRA2GRAY)
+        eq = cv2.equalizeHist(gray)
+
+        output = eq
+
+        return output
+
+    def calibrate(self):
+        (kpL, ftL) = self.describe(self.imageL)
+        (kpM, ftM) = self.describe(self.imageM)
+        (kpR, ftR) = self.describe(self.imageR)
+
+        if np.any([kpL, kpM, kpR, ftL, ftM, ftR] is None):
+            print("ERROR: Unable to find key points or features between images.")
+            return
+
+        ptsA = self.match(kpL, kpM, ftL, ftM, self.ratio)
+        ptsB = self.match(kpR, kpM, ftR, ftM, self.ratio)
+
+        if np.any(ptsA is None) or np.any(ptsB is None):
+            print("ERROR: Unable to match points between images")
+            return
+
+        (H1, status) = self.get_homography(ptsA[0], ptsA[1], self.shift[0], 0, self.reprojThresh)
+        (H2, status) = self.get_homography(ptsB[0], ptsB[1], 0, 0, self.reprojThresh)
+
+        if H2 is None or H1 is None:
+            print("ERROR: Unable to find homography matrix for one or more images.")
+            return
+
+        self.hmatM = np.eye(3)
+        self.hmatM[0][-1] = self.shift[0]
+        self.hmatM[1][-1] = self.shift[1]
+
+        # 1 0 tX
+        # 0 1 tY
+        # 0 0 1
+
+        self.hmatL = np.matmul(self.hmatM, H1)
+        self.hmatR = np.matmul(self.hmatM, H2)
+
+
     def stitch(self, images):
-        (imageL, imageM, imageR) = images
-        ratio = 0.75
-        reprojThresh = 4.0
+        (self.imageL, self.imageM, self.imageR) = images
 
-        canvas_dim = max(imageM.shape[0], imageM.shape[1]) * len(images)
+        max_dim = max(self.imageM.shape[0], self.imageM.shape[1])
+        canvas_dim = max_dim * len(images)
 
-        canvas = np.zeros((canvas_dim, canvas_dim, 3), np.uint8)
+        #canvasA = np.zeros((canvas_dim, canvas_dim, 4), np.uint8)
+        #canvasB = np.zeros((canvas_dim, canvas_dim, 4), np.uint8)
 
-        maskL = np.zeros((imageL.shape[0], imageL.shape[1]))
-        maskM = np.zeros((imageM.shape[0], imageM.shape[1]))
-        maskR = np.zeros((imageR.shape[0], imageR.shape[1]))
+        self.shift = [max_dim, max_dim]
+        if self.hmatL is None or self.hmatR is None:
+            self.calibrate()
 
-        (kpL, ftL) = self.describe(imageL)
-        (kpM, ftM) = self.describe(imageM)
-        (kpR, ftR) = self.describe(imageR)
 
-        dst_dim = int(canvas_dim / 2)
-        shift = int(dst_dim - (imageM.shape[1] / 2)) 
 
-        (pts1, pts2) = self.match(kpL, kpM, ftL, ftM, ratio) 
-        (H1, status) = self.get_homography(pts1, pts2, shift, 0, reprojThresh)
+        #tmp = cv2.warpPerspective(imageL, hMat_LINV, (canvas_dim, canvas_dim))
+        #tmp[0:imageM.shape[0], 0:imageM.shape[1], :] = 0.5
+        #tmp[offsety:imageM.shape[0] + offsety, offsetx:imageM.shape[1] + offsetx] = imageM
+        #canvas = tmp
 
-        (pts1, pts2) = self.match(kpR, kpM, ftR, ftM, ratio)
-        (H2, status) = self.get_homography(pts1, pts2, 0, 0, reprojThresh)
 
-        resultA = cv2.warpPerspective(imageL, H1, (dst_dim, dst_dim))
-        resultB = cv2.warpPerspective(imageR, H2, (dst_dim, dst_dim))
+        resultL = cv2.warpPerspective(self.imageL, self.hmatL, (canvas_dim, canvas_dim))
+        resultM = cv2.warpPerspective(self.imageM, self.hmatM, (canvas_dim, canvas_dim))
+        resultR = cv2.warpPerspective(self.imageR, self.hmatR, (canvas_dim, canvas_dim))
 
-        canvas[0:resultA.shape[0], 0:resultA.shape[1]] = resultA
-        resultB_start = shift
-        resultB_end = resultB_start + resultB.shape[1]
-        canvas[0:resultB.shape[0], resultB_start:resultB_end] = resultB
-        canvas[0:imageM.shape[0], shift:imageM.shape[1] + shift] = imageM
+        canvas = resultR
+        canvas[resultL > 0] = resultL[resultL > 0]
+        canvas[resultM > 0] = resultM[resultM > 0]
 
-        return canvas
+        # canvasA[0:resultA.shape[0], 0:resultA.shape[1]] = resultA
+        # resultB_start = shift
+        # resultB_end = resultB_start + resultB.shape[1]
+        # canvasB[0:resultB.shape[0], resultB_start:resultB_end] = resultB
+        # canvasB[0:imageM.shape[0], shift:imageM.shape[1] + shift] = imageM
+        #
+        # canvasB[canvasA > 0] = 0
+
+        #TODO
+        #canvas = resultL
+        #canvas[resultR > 0] = resultR[resultR > 0]
+        #canvas[resultM > 0] = resultM[resultM > 0]
+        #canvasA + canvasB
+
+        return cv2.resize(canvas, None, fx=0.444444, fy=0.444444)
 
     def get_homography(self, pts1, pts2, shift_x, shift_y, reprojThresh):
-        for pt in pts2:
-            pt[0] += shift_x
-            pt[1] += shift_y
+        #for pt in pts2:
+        #    pt[0] += shift_x
+        #    pt[1] += shift_y
         return cv2.findHomography(pts1, pts2, cv2.RANSAC, reprojThresh)
         
 
     def describe(self, image):
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        image = self.prepare_for_calibration(image)
         descriptor = cv2.xfeatures2d.SIFT_create()
         (keypoints, features) = descriptor.detectAndCompute(image, None)
         keypoints = np.float32([kp.pt for kp in keypoints])
         return (keypoints, features)
 
     def match(self, kp1, kp2, ft1, ft2, ratio):
-        matcher = cv2.DescriptorMatcher_create("BruteForce")
+
+        # FLANN_INDEX_KDTREE = 1
+        # index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=5)
+        # search_params = dict(checks=50)
+        # flann = cv2.FlannBasedMatcher(index_params, search_params)
+
+        matcher = cv2.DescriptorMatcher_create("BruteForce") #flann
         rawMatches = matcher.knnMatch(ft1, ft2, 2)
         matches = []
         for m in rawMatches:

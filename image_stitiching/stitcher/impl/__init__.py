@@ -1,1 +1,1 @@
-import stitcher.impl.__main__
+import image_stitiching.stitcher.impl
