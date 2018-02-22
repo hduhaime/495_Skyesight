@@ -2,7 +2,7 @@
 
 This application currently creates a panorama of three video feeds taken by two webcameras and a kinect by stitching the three images together. It also enables manual recalibration on keyboard input as well as toggling between each camera feed and the stitched feed.
 
-Requirements:
+## Requirements:
 1) Windows 10 Operating System
 2) One Microsoft Kinect
 3) Two USB Webcameras
@@ -16,7 +16,7 @@ Requirements:
     pykinect2==0.1.0
   ```
 
-Setup:
+## Setup:
 1) run the command `pip install -r requirements.txt`
 2) `python3 FrameGrab.py`
 
@@ -26,12 +26,13 @@ The application accepts the following user keyboard
 3) Numberkeys 1-4 - Toggles between the feeds
 
 
-Infrared Sensors Research
+## Next release research
+### Infrared Sensors Research
 https://www.mouser.com/ProductDetail/SparkFun-Electronics/SEN-13959/?qs=wwacUt%252bV97u8zvpWEUiqvw%3D%3D&gclid=CjwKCAiA8bnUBRA-EiwAc0hZk5Gbmuo5_SjD2euzMF-DB9jgNoD3PM6PEI31G3nICwMRqO8GBTqLDBoCuLQQAvD_BwE
 
 https://www.youtube.com/watch?v=iNXfADw0M9Y
 
-Image Stitching Research 
+### Image Stitching Research 
 
 https://www.pyimagesearch.com/2016/01/11/opencv-panorama-stitching/
 https://docs.opencv.org/3.4.0/
