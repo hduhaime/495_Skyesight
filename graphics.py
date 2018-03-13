@@ -44,4 +44,30 @@ class Graphics:
 		self.root.wm_title("PyImageSearch PhotoBooth")
 		self.root.wm_protocol("WM_DELETE_WINDOW", self.onClose)
 
+	def displayFeed(self, img_array):
+		try: 
+			image = Image.fromarray(img_array)
+			image = ImageTk.PhotoImage(image)
+	
+			# if the panel is not None, we need to initialize it
+			if self.panel is None:
+				self.panel = tki.Label(image=image)
+				self.panel.image = image
+				self.panel.pack(side="left", padx=10, pady=10)
+	
+			# otherwise, simply update the panel
+			else:
+				self.panel.configure(image=image)
+				self.panel.image = image
+		except RuntimeError, e:
+			print("[INFO] caught a RuntimeError")
+			
+	def onClose(self):
+		# set the stop event, cleanup the camera, and allow the rest of
+		# the quit process to continue
+		print("[INFO] closing...")
+		self.stopEvent.set()
+		self.vs.stop()
+		self.root.quit()
+
 
