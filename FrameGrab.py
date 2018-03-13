@@ -71,9 +71,9 @@ def display_feeds(*args):
 def main():
 
     # Get camera feeds
-    computer_webcam = cv2.VideoCapture(2)
-    attached_webcam = cv2.VideoCapture(3)
-    kinect = PyKinectRuntime.PyKinectRuntime(PyKinectV2.FrameSourceTypes_Color)
+    cam1 = get_webcam_frame(cv2.VideoCapture(1))
+    cam2 = get_webcam_frame(cv2.VideoCapture(2))
+    cam3 = get_webcam_frame(cv2.VideoCapture(3))
 
     x = 0
     while(True):
@@ -95,26 +95,23 @@ def main():
         elif keyVal & 0xFF == ord('4'):
             SCREEN_IDX = 4
 
-        # Get webcam frames
-        computer_webcam_frame = get_webcam_frame(computer_webcam)
-        attached_webcam_frame = get_webcam_frame(attached_webcam)
-        height, width, channels = computer_webcam_frame.shape
-
-        kinect_frame = get_kinect_frame(kinect, height, width)
+        height, width, channels = cam1.shape
 
 
-        if computer_webcam_frame is None or kinect_frame is None:
+        if cam1 is None or cam2 is None or cam3 is None:
            continue
         else:
             x += 1
 
-        display_feeds(kinect_frame, computer_webcam_frame, attached_webcam_frame)
+        display_feeds(cam1, cam2, cam3)
 
 
 
 
     # When everything done, release the capture
-    computer_webcam.release()
+    cam1.release()
+    cam2.release()
+    cam3.release()
     cv2.destroyAllWindows()
 
 
