@@ -1,8 +1,6 @@
+import sys
 import numpy as np
 import cv2
-from pykinect2 import PyKinectV2
-from pykinect2.PyKinectV2 import *
-from pykinect2 import PyKinectRuntime
 import image_stitiching.stitcher.impl.__main__ as stitch_impl
 import code
 
@@ -50,6 +48,8 @@ def display_feeds(*args):
     else:
         # Concatenate images in list and scale them so that they all fit on screen
 
+        # REMOVE THIS LINE FOR 3 CAMERAS TO WORK AGAAIN YOU FOOOOOOL
+        arglist.append(arglist[-1])
         stitched_image = stitch.stitch(arglist)
 
         #Show feed L
@@ -70,10 +70,12 @@ def display_feeds(*args):
 
 def main():
 
+    num_cams = int(sys.argv[1])
+
     # Get camera feeds
-    cam1 = get_webcam_frame(cv2.VideoCapture(1))
-    cam2 = get_webcam_frame(cv2.VideoCapture(2))
-    cam3 = get_webcam_frame(cv2.VideoCapture(3))
+    cam_list = []
+    for x in range(0, num_cams):
+        cam_list.append(cv2.VideoCapture(x))
 
     x = 0
     while(True):
@@ -95,24 +97,26 @@ def main():
         elif keyVal & 0xFF == ord('4'):
             SCREEN_IDX = 4
 
-        height, width, channels = cam1.shape
+        # Get frame from video feeds
+        cam_feeds = [get_webcam_frame(x) for x in cam_list]
 
+        height, width, channels = cam_feeds[0].shape
 
-        if cam1 is None or cam2 is None or cam3 is None:
+        if np.any(cam_feeds == None):
            continue
         else:
             x += 1
 
-        display_feeds(cam1, cam2, cam3)
+        display_feeds(*cam_feeds)
 
 
 
 
     # When everything done, release the capture
-    cam1.release()
-    cam2.release()
-    cam3.release()
+    for cam in cam_list:
+        cam.release()
+
     cv2.destroyAllWindows()
 
-
-main()
+if __name__ == '__main__':
+    main()
