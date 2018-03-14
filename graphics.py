@@ -18,22 +18,35 @@ class Graphics:
 		# store the video stream object and output path, then initialize
 		# the most recently read frame, thread for reading frames, and
 		# the thread stop event
-		self.frame = None
 		self.thread = None
 		self.stopEvent = None
 
-		# initialize the root window and image panel
+		# initialize the root window
 		self.root = tki.Tk()
+		self.root.attributes('-fullscreen', True)
+
+		# Create a frame for the lower area of the screen
+		self.lowerFrame = tki.Frame(self.root)
+		self.lowerFrame.pack(side="bottom", expand=True, fill="x")
+
+		# Buttons
+
+		# Two buttons go in feedModificationFrame
+		self.selectLayoutBtn = tki.Button(self.lowerFrame, text="Select Layout")
+		self.selectLayoutBtn.pack(side="left", expand=True, fill="both", pady=5, anchor="se")
+
+		self.changeFeedBtn = tki.Button(self.lowerFrame, text="Change Feed")
+		self.changeFeedBtn.pack(side="left", expand=True, fill="both", pady=5, anchor="se")
+
+		# One button to Mute Notifications under these two buttons
+		self.muteNotificationsBtn = tki.Button(self.lowerFrame, text="Mute Notifications")
+		self.muteNotificationsBtn.pack(side="left", expand=True, fill="both", pady=5, anchor="se")
+
 		self.panel = None
 
 		self.cam_list = cam_list
 
-		# # create a button, that when pressed, will take the current
-		# # frame and save it to file
-		# btn = tki.Button(self.root, text="Snapshot!",
-		# 	command=self.takeSnapshot)
-		# btn.pack(side="bottom", fill="both", expand="yes", padx=10,
-		# 	pady=10)
+		# create button on bottom of screen
 
 		# start a thread that constantly pools the video sensor for
 		# the most recently read frame
@@ -42,26 +55,10 @@ class Graphics:
 		self.thread.start()
 
 		# set a callback to handle when the window is closed
-		self.root.wm_title("PyImageSearch PhotoBooth")
-		self.root.wm_protocol("WM_DELETE_WINDOW", self.onClose)
-
-	def displayFeed(self, img_array):
-		try:
-			image = Image.fromarray(img_array)
-			image = ImageTk.PhotoImage(image)
-
-			# if the panel is not None, we need to initialize it
-			if self.panel is None:
-				self.panel = tki.Label(image=image)
-				self.panel.image = image
-				self.panel.pack(side="left", padx=10, pady=10)
-
-			# otherwise, simply update the panel
-			else:
-				self.panel.configure(image=image)
-				self.panel.image = image
-		except RuntimeError as e:
-			print("[INFO] caught a RuntimeError")
+		self.root.wm_title("Skyesight")
+		self.main_menu = tki.Menu(self.root)
+		self.main_menu.add_command(label="Quit", command=self.onClose)
+		self.root.config(menu=self.main_menu)
 
 	def onClose(self):
 		# set the stop event, cleanup the camera, and allow the rest of
@@ -135,6 +132,25 @@ class Graphics:
 			# image_to_show = cv2.resize(np.concatenate(arglist, axis=1), None, fx=0.6666, fy=0.6666)
 			# cv2.imshow('frame', image_to_show)
 
+	def displayFeed(self, img_array):
+		try:
+			# Convert array from BGR to RGB and then to tkinter image
+			img_array = cv2.cvtColor(img_array, cv2.COLOR_BGR2RGB)
+			image = Image.fromarray(img_array)
+			image = ImageTk.PhotoImage(image)
+
+			if self.panel is None:
+				self.panel = tki.Label(image=image)
+				self.panel.image = image
+				self.panel.pack(side="left", expand=True, fill="both", padx=10, pady=10)
+
+			# otherwise, simply update the panel
+			else:
+				self.panel.configure(image=image)
+				self.panel.image = image
+		except RuntimeError as e:
+			print("[INFO] caught a RuntimeError")
+
 	def get_webcam_frame(self, capture):
 		ret, frame = capture.read()
 		frame_to_display = cv2.cvtColor(frame, cv2.COLOR_BGR2BGRA)
@@ -155,6 +171,7 @@ def main():
 
 	g = Graphics(cam_list)
 	g.root.mainloop()
+	g.root.destroy()
 
 	# When everything done, release the capture
 	for cam in cam_list:
