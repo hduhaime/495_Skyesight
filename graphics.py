@@ -25,22 +25,17 @@ class Graphics:
 		self.root = tki.Tk()
 		self.root.attributes('-fullscreen', True)
 
-		# Create a frame for the lower area of the screen
-		self.lowerFrame = tki.Frame(self.root)
-		self.lowerFrame.pack(side="bottom", expand=True, fill="x")
-
 		# Buttons
 
 		# Two buttons go in feedModificationFrame
-		self.selectLayoutBtn = tki.Button(self.lowerFrame, text="Select Layout")
-		self.selectLayoutBtn.pack(side="left", expand=True, fill="both", pady=5, anchor="se")
-
-		self.changeFeedBtn = tki.Button(self.lowerFrame, text="Change Feed")
-		self.changeFeedBtn.pack(side="left", expand=True, fill="both", pady=5, anchor="se")
+		self.selectLayoutBtn = tki.Button(self.root, text="Select Layout")
+		self.selectLayoutBtn.grid(row=1, column=0, sticky='nesw')
+		self.changeFeedBtn = tki.Button(self.root, text="Change Feed")
+		self.changeFeedBtn.grid(row=1, column=1, sticky='nesw')
 
 		# One button to Mute Notifications under these two buttons
-		self.muteNotificationsBtn = tki.Button(self.lowerFrame, text="Mute Notifications")
-		self.muteNotificationsBtn.pack(side="left", expand=True, fill="both", pady=5, anchor="se")
+		self.muteNotificationsBtn = tki.Button(self.root, text="Mute Notifications")
+		self.muteNotificationsBtn.grid(row=1, column=2, sticky='nesw')
 
 		self.panel = None
 
@@ -141,8 +136,8 @@ class Graphics:
 
 			if self.panel is None:
 				self.panel = tki.Label(image=image)
+				self.panel.grid(row=0, columnspan=3, sticky='nesw')
 				self.panel.image = image
-				self.panel.pack(side="left", expand=True, fill="both", padx=10, pady=10)
 
 			# otherwise, simply update the panel
 			else:
