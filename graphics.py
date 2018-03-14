@@ -8,6 +8,7 @@ import tkinter as tki
 import threading
 import numpy as np
 import cv2
+
 import image_stitiching.stitcher.impl.__main__ as stitch_impl
 import menuSelections
 

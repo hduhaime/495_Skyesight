@@ -1,4 +1,4 @@
-from graphics import Graphics, LayoutSettings, FeedList
+from graphics import LayoutSettings, FeedList
 import tkinter as tki
 
 class LayoutMenu:
