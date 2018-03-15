@@ -52,14 +52,17 @@ class Graphics:
         self.root.grid_columnconfigure(1, weight=1)
         self.root.grid_columnconfigure(2, weight=1)
         self.root.grid_rowconfigure(0, weight=1)
+        self.root.grid_rowconfigure(1, weight=1)
 
         # Format three buttons on bottom of screen
         self.selectLayoutBtn = tki.Button(self.root, text="Select Layout",
                                           command=self.create_select_layout_window)
         self.selectLayoutBtn.grid(row=1, column=0, sticky='nesw')
+
         self.changeFeedBtn = tki.Button(self.root, text="Change Feed",
                                         command=self.create_select_feed_window)
         self.changeFeedBtn.grid(row=1, column=1, sticky='nesw')
+
         self.muteNotificationsBtn = tki.Button(self.root, text="Mute Notifications",
                                                command=self.mute_unmute_notifications)
         self.muteNotificationsBtn.grid(row=1, column=2, sticky='nesw')

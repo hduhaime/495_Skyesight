@@ -5,10 +5,11 @@ class LayoutMenu:
     def __init__(self, application):
         self.parentApp = application
         self.window = tki.Toplevel()
+        self.window.state("zoomed")
         self.fullScreenBt = tki.Button(self.window, text="Fullscreen", command=self.switch_to_fullscreen)
-        self.fullScreenBt.pack()
+        self.fullScreenBt.pack(fill='both', expand=True)
         self.splitScreenBt = tki.Button(self.window, text="Splitscreen", command=self.switch_to_splitscreen)
-        self.splitScreenBt.pack()
+        self.splitScreenBt.pack(fill='both', expand=True)
 
         if application.layoutSelection.value == LayoutSettings.Fullscreen.value:
             self.fullScreenBt.config(relief="sunken")
@@ -42,6 +43,7 @@ class FeedMenu:
         self.parentApp = application
         self.buttonList = []
         self.window = tki.Toplevel()
+        self.window.state("zoomed")
 
         self.buttonList.append(tki.Button(self.window, text="Overhead",
                                           command=lambda: self.select_feed(FeedList.Overhead)))
@@ -57,7 +59,7 @@ class FeedMenu:
                                           command=lambda: self.select_feed(FeedList.DualRR)))
 
         for button in self.buttonList:
-            button.pack()
+            button.pack(fill='both', expand=True)
 
         self.buttonList[self.parentApp.feedSelection.value].config(relief="sunken")
 
