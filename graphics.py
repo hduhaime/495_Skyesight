@@ -221,8 +221,8 @@ class Graphics:
     def switch_to_splitscreen(self):
         self.layoutSelection = LayoutSettings.Splitscreen
         self.fullScreenPanel.grid_forget()
-        self.splitLeftPanel.grid(row=0, columnspan=2)
-        self.splitRightPanel.grid(row=0, column=4, columnspan=2)
+        self.splitLeftPanel.grid(row=0, columnspan=3)
+        self.splitRightPanel.grid(row=0, column=3, columnspan=3)
 
 
     def mute_unmute_notifications(self):
