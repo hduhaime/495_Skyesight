@@ -38,7 +38,7 @@ class Graphics:
 
         # Set layout, feed, and notification options
         self.layoutSelection = LayoutSettings.Fullscreen
-        self.feedSelection = FeedList.Overhead
+        self.mainFeedSelection = FeedList.Overhead
         self.notificationsMuted = False
 
         # Menus
@@ -51,23 +51,31 @@ class Graphics:
         self.root.grid_columnconfigure(0, weight=1)
         self.root.grid_columnconfigure(1, weight=1)
         self.root.grid_columnconfigure(2, weight=1)
+        self.root.grid_columnconfigure(3, weight=1)
+        self.root.grid_columnconfigure(4, weight=1)
+        self.root.grid_columnconfigure(5, weight=1)
         self.root.grid_rowconfigure(0, weight=1)
         self.root.grid_rowconfigure(1, weight=1)
 
         # Format three buttons on bottom of screen
         self.selectLayoutBtn = tki.Button(self.root, text="Select Layout",
                                           command=self.create_select_layout_window)
-        self.selectLayoutBtn.grid(row=1, column=0, sticky='nesw')
+        self.selectLayoutBtn.grid(row=1, column=0, columnspan=2, sticky='nesw')
 
         self.changeFeedBtn = tki.Button(self.root, text="Change Feed",
                                         command=self.create_select_feed_window)
-        self.changeFeedBtn.grid(row=1, column=1, sticky='nesw')
+        self.changeFeedBtn.grid(row=1, column=2, columnspan=2, sticky='nesw')
 
         self.muteNotificationsBtn = tki.Button(self.root, text="Mute Notifications",
                                                command=self.mute_unmute_notifications)
-        self.muteNotificationsBtn.grid(row=1, column=2, sticky='nesw')
+        self.muteNotificationsBtn.grid(row=1, column=4, columnspan=2, sticky='nesw')
 
-        self.panel = None
+        # make panels for images
+        self.fullScreenPanel = None
+
+        # splitscreen panels
+        self.splitLeftPanel = None
+        self.splitRightPanel = None
 
         self.cam_list = cam_list
 
@@ -162,15 +170,31 @@ class Graphics:
             image = Image.fromarray(img_array)
             image = ImageTk.PhotoImage(image)
 
-            if self.panel is None:
-                self.panel = tki.Label(image=image)
-                self.panel.grid(row=0, columnspan=3)
-                self.panel.image = image
+            # initialize panel if it has not been yet
+            if self.fullScreenPanel is None:
+                self.fullScreenPanel = tki.Label(image=image)
+                self.fullScreenPanel.grid(row=0, column=1, columnspan=4)
+                self.fullScreenPanel.image = image
 
-            # otherwise, simply update the panel
+                self.splitLeftPanel = tki.Label(image=image)
+                self.splitLeftPanel.image = image
+                self.splitRightPanel = tki.Label(image=image)
+                self.splitRightPanel.image = image
+
+            # otherwise, update the panel
             else:
-                self.panel.configure(image=image)
-                self.panel.image = image
+                if self.layoutSelection.value == LayoutSettings.Fullscreen.value:
+                    self.fullScreenPanel.configure(image=image)
+                    self.fullScreenPanel.image = image
+                else:
+                    # splitscreen so update the two panels
+                    # TODO: move this to calling function if there is more than one feed
+                    self.splitLeftPanel.configure(image=image)
+                    self.splitLeftPanel.image = image
+                    self.splitRightPanel.configure(image=image)
+                    self.splitRightPanel.image = image
+
+
         except RuntimeError as e:
             print("[INFO] caught a RuntimeError")
 
@@ -187,6 +211,19 @@ class Graphics:
 
     def create_select_feed_window(self):
         self.selectFeedMenu = menuSelections.FeedMenu(self)
+
+    def switch_to_fullscreen(self):
+        self.layoutSelection = LayoutSettings.Fullscreen
+        self.splitLeftPanel.grid_forget()
+        self.splitRightPanel.grid_forget()
+        self.fullScreenPanel.grid(row=0, columnspan=3)
+
+    def switch_to_splitscreen(self):
+        self.layoutSelection = LayoutSettings.Splitscreen
+        self.fullScreenPanel.grid_forget()
+        self.splitLeftPanel.grid(row=0, columnspan=2)
+        self.splitRightPanel.grid(row=0, column=4, columnspan=2)
+
 
     def mute_unmute_notifications(self):
         if self.notificationsMuted:
