@@ -47,7 +47,11 @@ class Graphics:
 
         # initialize the root window
         self.root = tki.Tk()
-        self.root.attributes('-fullscreen', True)
+        self.root.wm_state('zoomed')
+        self.root.grid_columnconfigure(0, weight=1)
+        self.root.grid_columnconfigure(1, weight=1)
+        self.root.grid_columnconfigure(2, weight=1)
+        self.root.grid_rowconfigure(0, weight=1)
 
         # Format three buttons on bottom of screen
         self.selectLayoutBtn = tki.Button(self.root, text="Select Layout",
@@ -56,7 +60,7 @@ class Graphics:
         self.changeFeedBtn = tki.Button(self.root, text="Change Feed",
                                         command=self.create_select_feed_window)
         self.changeFeedBtn.grid(row=1, column=1, sticky='nesw')
-        self.muteNotificationsBtn = tki.Button(self.root, text="Notifications Unmuted",
+        self.muteNotificationsBtn = tki.Button(self.root, text="Mute Notifications",
                                                command=self.mute_unmute_notifications)
         self.muteNotificationsBtn.grid(row=1, column=2, sticky='nesw')
 
@@ -74,9 +78,7 @@ class Graphics:
 
         # set a callback to handle when the window is closed
         self.root.wm_title("Skyesight")
-        self.main_menu = tki.Menu(self.root)
-        self.main_menu.add_command(label="Quit", command=self.on_close)
-        self.root.config(menu=self.main_menu)
+        self.root.wm_protocol("WM_DELETE_WINDOW", self.on_close)
 
     def on_close(self):
         # set the stop event, cleanup the camera, and allow the rest of
@@ -159,7 +161,7 @@ class Graphics:
 
             if self.panel is None:
                 self.panel = tki.Label(image=image)
-                self.panel.grid(row=0, columnspan=3, sticky='nesw')
+                self.panel.grid(row=0, columnspan=3)
                 self.panel.image = image
 
             # otherwise, simply update the panel
@@ -186,10 +188,10 @@ class Graphics:
     def mute_unmute_notifications(self):
         if self.notificationsMuted:
             self.notificationsMuted = False
-            self.muteNotificationsBtn.config(text="Notifications Unmuted")
+            self.muteNotificationsBtn.config(text="Mute Notifications")
         else:
             self.notificationsMuted = True
-            self.muteNotificationsBtn.config(text="Notifications Muted")
+            self.muteNotificationsBtn.config(text="Unmute Notifications")
 
 
 def main():
