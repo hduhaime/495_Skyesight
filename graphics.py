@@ -27,23 +27,47 @@ class FeedList(Enum):
     DualRR = 5  # Dual Right/Rear
 
 
+class FeedModificationButtons(Enum):
+    MainPrev = 0
+    MainNext = 1
+    LeftPrev = 2
+    LeftNext = 3
+    RightPrev = 4
+    RightNext = 5
+
+
+class FeedScreens(Enum):
+    Main = 0
+    SplitLeft = 1
+    SplitRight = 2
+
 stitch = stitch_impl.Stitcher()
 SCREEN_IDX = 1
 
 
 class Graphics:
     def __init__(self, cam_list):
+        self.cam_list = cam_list
         self.thread = None
         self.stopEvent = None
 
         # Set layout, feed, and notification options
         self.layoutSelection = LayoutSettings.Fullscreen
-        self.mainFeedSelection = FeedList.Overhead
+        self.feedSelections = []
+        for i in FeedScreens:
+            self.feedSelections.append(FeedList.Overhead)
+
         self.notificationsMuted = False
 
         # Menus
         self.layoutMenu = None
         self.selectFeedMenu = None
+
+        # make panels for images
+        self.fullScreenPanel = None
+        # splitscreen panels
+        self.splitLeftPanel = None
+        self.splitRightPanel = None
 
         # initialize the root window
         self.root = tki.Tk()
@@ -54,32 +78,48 @@ class Graphics:
         self.root.grid_columnconfigure(3, weight=1)
         self.root.grid_columnconfigure(4, weight=1)
         self.root.grid_columnconfigure(5, weight=1)
-        self.root.grid_rowconfigure(0, weight=1)
+        self.root.grid_columnconfigure(6, weight=1)
+        self.root.grid_columnconfigure(7, weight=1)
+        self.root.grid_columnconfigure(8, weight=1)
+        self.root.grid_columnconfigure(9, weight=1)
+        self.root.grid_columnconfigure(10, weight=1)
+        self.root.grid_columnconfigure(11, weight=1)
+        self.root.grid_rowconfigure(0, weight=2)
         self.root.grid_rowconfigure(1, weight=1)
+        self.root.grid_rowconfigure(2, weight=1)
 
-        # Format three buttons on bottom of screen
-        self.selectLayoutBtn = tki.Button(self.root, text="Select Layout",
-                                          command=self.create_select_layout_window)
-        self.selectLayoutBtn.grid(row=1, column=0, columnspan=2, sticky='nesw')
-
-        self.changeFeedBtn = tki.Button(self.root, text="Change Feed",
-                                        command=self.create_select_feed_window)
-        self.changeFeedBtn.grid(row=1, column=2, columnspan=2, sticky='nesw')
+        # Format buttons on bottom of screen
+        self.selectLayoutBtn = tki.Button(self.root, text="Make Splitscreen",
+                                          command=self.switch_to_splitscreen)
+        self.selectLayoutBtn.grid(row=2, column=0, columnspan=6, sticky='nesw')
 
         self.muteNotificationsBtn = tki.Button(self.root, text="Mute Notifications",
                                                command=self.mute_unmute_notifications)
-        self.muteNotificationsBtn.grid(row=1, column=4, columnspan=2, sticky='nesw')
+        self.muteNotificationsBtn.grid(row=2, column=6, columnspan=6, sticky='nesw')
 
-        # make panels for images
-        self.fullScreenPanel = None
 
-        # splitscreen panels
-        self.splitLeftPanel = None
-        self.splitRightPanel = None
+        # Put feed toggle buttons under main feed
+        self.toggleFeedBtns = []
+        self.toggleFeedBtns.append(tki.Button(self.root, text="Prev Feed",
+                                              command=lambda: self.prev_feed(FeedScreens.Main)))
+        self.toggleFeedBtns[FeedModificationButtons.MainPrev.value].grid(row=1, column=4, columnspan=2, sticky='nesw')
 
-        self.cam_list = cam_list
+        self.toggleFeedBtns.append(tki.Button(self.root, text="Next Feed",
+                                          command=lambda: self.next_feed(FeedScreens.Main)))
+        self.toggleFeedBtns[FeedModificationButtons.MainNext.value].grid(row=1, column=6, columnspan=2, sticky='nesw')
 
-        # create button on bottom of screen
+
+        # Buttons for splitscreen mode
+        self.toggleFeedBtns.append(tki.Button(self.root, text="Prev Feed",
+                                     command=lambda: self.prev_feed(FeedScreens.Main)))
+        self.toggleFeedBtns.append(tki.Button(self.root, text="Next Feed",
+                                          command=lambda: self.next_feed(FeedScreens.Main)))
+
+        self.toggleFeedBtns.append(tki.Button(self.root, text="Prev Feed",
+                                       command=lambda: self.prev_feed(FeedScreens.Main)))
+        self.toggleFeedBtns.append(tki.Button(self.root, text="Next Feed",
+                                          command=lambda: self.next_feed(FeedScreens.Main)))
+
 
         # start a thread that constantly pools the video sensor for
         # the most recently read frame
@@ -173,7 +213,7 @@ class Graphics:
             # initialize panel if it has not been yet
             if self.fullScreenPanel is None:
                 self.fullScreenPanel = tki.Label(image=image)
-                self.fullScreenPanel.grid(row=0, column=1, columnspan=4)
+                self.fullScreenPanel.grid(row=0, column=2, columnspan=8)
                 self.fullScreenPanel.image = image
 
                 self.splitLeftPanel = tki.Label(image=image)
@@ -214,16 +254,43 @@ class Graphics:
 
     def switch_to_fullscreen(self):
         self.layoutSelection = LayoutSettings.Fullscreen
+        self.selectLayoutBtn.config(text="Make Splitscreen", command=self.switch_to_splitscreen)
+
+        # remove splitscreen things from the window
         self.splitLeftPanel.grid_forget()
         self.splitRightPanel.grid_forget()
-        self.fullScreenPanel.grid(row=0, columnspan=3)
+        self.toggleFeedBtns[FeedModificationButtons.LeftPrev.value].grid_forget()
+        self.toggleFeedBtns[FeedModificationButtons.LeftNext.value].grid_forget()
+        self.toggleFeedBtns[FeedModificationButtons.RightPrev.value].grid_forget()
+        self.toggleFeedBtns[FeedModificationButtons.RightNext.value].grid_forget()
+
+        # put fullscreeen things into window
+        self.toggleFeedBtns[FeedModificationButtons.MainPrev.value].grid(row=1, column=4, columnspan=2, sticky='nesw')
+        self.toggleFeedBtns[FeedModificationButtons.MainNext.value].grid(row=1, column=6, columnspan=2, sticky='nesw')
+        self.fullScreenPanel.grid(row=0, column=2, columnspan=8)
 
     def switch_to_splitscreen(self):
         self.layoutSelection = LayoutSettings.Splitscreen
+        self.selectLayoutBtn.config(text="Make Fullscreen", command=self.switch_to_fullscreen)
         self.fullScreenPanel.grid_forget()
-        self.splitLeftPanel.grid(row=0, columnspan=3)
-        self.splitRightPanel.grid(row=0, column=3, columnspan=3)
+        self.toggleFeedBtns[FeedModificationButtons.MainPrev.value].grid_forget()
+        self.toggleFeedBtns[FeedModificationButtons.MainNext.value].grid_forget()
+        self.splitLeftPanel.grid(row=0, columnspan=6)
+        self.splitRightPanel.grid(row=0, column=6, columnspan=6)
+        self.toggleFeedBtns[FeedModificationButtons.LeftPrev.value].grid(row=1, column=1, columnspan=2, sticky="nesw")
+        self.toggleFeedBtns[FeedModificationButtons.LeftNext.value].grid(row=1, column=3, columnspan=2, sticky="nesw")
+        self.toggleFeedBtns[FeedModificationButtons.RightPrev.value].grid(row=1, column=7, columnspan=2, sticky="nesw")
+        self.toggleFeedBtns[FeedModificationButtons.RightNext.value].grid(row=1, column=9, columnspan=2, sticky="nesw")
 
+    def prev_feed(self, feedSelection):
+        current = self.feedSelections[feedSelection.value]
+        feedListVals = [feedList.value for feedList in FeedList]
+        self.feedSelections[feedSelection.value] = FeedList(feedListVals[current.value - 1])
+
+    def next_feed(self, feedSelection):
+        current = self.feedSelections[feedSelection.value]
+        feedListVals = [feedList.value for feedList in FeedList]
+        self.feedSelections[feedSelection.value] = FeedList(feedListVals[current.value] + 1)
 
     def mute_unmute_notifications(self):
         if self.notificationsMuted:
