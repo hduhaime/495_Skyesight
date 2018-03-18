@@ -10,7 +10,6 @@ import numpy as np
 import cv2
 
 import image_stitiching.stitcher.impl.__main__ as stitch_impl
-import menuSelections
 
 
 class LayoutSettings(Enum):
@@ -58,10 +57,6 @@ class Graphics:
             self.feedSelections.append(FeedList.Overhead)
 
         self.notificationsMuted = False
-
-        # Menus
-        self.layoutMenu = None
-        self.selectFeedMenu = None
 
         # make panels for images
         self.fullScreenPanel = None
@@ -246,12 +241,6 @@ class Graphics:
 
         return cv2.flip(frame_to_display, 1)
 
-    def create_select_layout_window(self):
-        self.layoutMenu = menuSelections.LayoutMenu(self)
-
-    def create_select_feed_window(self):
-        self.selectFeedMenu = menuSelections.FeedMenu(self)
-
     def switch_to_fullscreen(self):
         self.layoutSelection = LayoutSettings.Fullscreen
         self.selectLayoutBtn.config(text="Make Splitscreen", command=self.switch_to_splitscreen)
@@ -290,7 +279,7 @@ class Graphics:
     def next_feed(self, feedSelection):
         current = self.feedSelections[feedSelection.value]
         feedListVals = [feedList.value for feedList in FeedList]
-        self.feedSelections[feedSelection.value] = FeedList(feedListVals[current.value] + 1)
+        self.feedSelections[feedSelection.value] = FeedList((feedListVals[current.value] + 1) % len(feedListVals))
 
     def mute_unmute_notifications(self):
         if self.notificationsMuted:
