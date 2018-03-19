@@ -54,7 +54,8 @@ class Graphics:
     def __init__(self, cam_list):
         self.thread = None
         self.stopEvent = None
-
+        #self.sensor = UltrasonicSensor()
+        #print(self.sensor.getReading())
         self.camList = cam_list
         self.camFeeds = {}
         for camera in Cameras:
@@ -80,7 +81,7 @@ class Graphics:
 
         # initialize the root window
         self.root = tki.Tk()
-        self.root.wm_state('zoomed')
+        self.root.geometry('800x600')
         for i in range(12):
             self.root.grid_columnconfigure(i, weight=1)
 
@@ -129,6 +130,7 @@ class Graphics:
 
         # set a callback to handle when the window is closed
         self.root.wm_title("Skyesight")
+        
         self.root.wm_protocol("WM_DELETE_WINDOW", self.on_close)
 
     def on_close(self):
@@ -201,14 +203,14 @@ class Graphics:
 
         # initialize panel if it has not been yet
         if self.fullScreenPanel is None:
-            self.fullScreenPanel = tki.Label(image=fullScreenFeed)
+            self.fullScreenPanel = tki.Label(image=fullScreenFeed, width=300, height=300)
             self.fullScreenPanel.grid(row=0, column=2, columnspan=8)
             self.fullScreenPanel.image = fullScreenFeed
 
-            self.splitLeftPanel = tki.Label(image=splitLeftFeed)
+            self.splitLeftPanel = tki.Label(image=splitLeftFeed, width=300, height=300)
             self.splitLeftPanel.image = splitLeftFeed
 
-            self.splitRightPanel = tki.Label(image=splitRightFeed)
+            self.splitRightPanel = tki.Label(image=splitRightFeed, width=300, height=300)
             self.splitRightPanel.image = splitRightFeed
 
         # otherwise, update the panel
@@ -249,6 +251,7 @@ class Graphics:
         self.toggleFeedBtns[FeedModificationButtons.MainPrev.value].grid(row=1, column=4, columnspan=2, sticky='nesw')
         self.toggleFeedBtns[FeedModificationButtons.MainNext.value].grid(row=1, column=6, columnspan=2, sticky='nesw')
         self.fullScreenPanel.grid(row=0, column=2, columnspan=8)
+        self.fullScreenPanel.configure(height=300, width=300)
 
     def switch_to_splitscreen(self):
         self.layoutSelection = LayoutSettings.Splitscreen
@@ -258,6 +261,8 @@ class Graphics:
         self.toggleFeedBtns[FeedModificationButtons.MainNext.value].grid_forget()
         self.splitLeftPanel.grid(row=0, columnspan=6)
         self.splitRightPanel.grid(row=0, column=6, columnspan=6)
+        self.splitLeftPanel.configure(width=300, height=300)
+        self.splitRightPanel.configure(width=300, height=300)
         self.toggleFeedBtns[FeedModificationButtons.LeftPrev.value].grid(row=1, column=1, columnspan=2, sticky="nesw")
         self.toggleFeedBtns[FeedModificationButtons.LeftNext.value].grid(row=1, column=3, columnspan=2, sticky="nesw")
         self.toggleFeedBtns[FeedModificationButtons.RightPrev.value].grid(row=1, column=7, columnspan=2, sticky="nesw")
@@ -286,12 +291,9 @@ def main():
     num_cams = int(sys.argv[1])
 
     # Get camera feeds
-    cam_list = []
-    cam_list.append(cv2.VideoCapture(0))
-    cam_list.append(cv2.VideoCapture(2))
-    cam_list.append(cv2.VideoCapture(1))
-    #for x in range(0, num_cams):
-    #    cam_list.append(cv2.VideoCapture(x))
+    cam_list= []
+    for x in range(0, num_cams):
+        cam_list.append(cv2.VideoCapture(x))
 
     g = Graphics(cam_list)
     g.root.mainloop()
