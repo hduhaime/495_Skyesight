@@ -35,26 +35,39 @@ class FeedModificationButtons(Enum):
     RightNext = 5
 
 
-class FeedScreens(Enum):
+class ScreenSelections(Enum):
     Main = 0
     SplitLeft = 1
     SplitRight = 2
 
-stitch = stitch_impl.Stitcher()
-SCREEN_IDX = 1
 
+class Cameras(Enum):
+    Rear = 0
+    Left = 1
+    Right = 2
+
+
+stitch = stitch_impl.Stitcher()
 
 class Graphics:
     def __init__(self, cam_list):
-        self.cam_list = cam_list
         self.thread = None
         self.stopEvent = None
 
+        self.camList = cam_list
+        self.camFeeds = {}
+        for camera in Cameras:
+            self.camFeeds[camera] = None
+
+        self.feedList = {}
+        for feed in FeedList:
+            self.feedList[feed] = None
+
         # Set layout, feed, and notification options
         self.layoutSelection = LayoutSettings.Fullscreen
-        self.feedSelections = []
-        for i in FeedScreens:
-            self.feedSelections.append(FeedList.Overhead)
+        self.feedSelections = []  # selection of feed to be shown in fullscreen and splitscreen modes
+        for i in ScreenSelections:
+            self.feedSelections.append(FeedList.SingleRear)
 
         self.notificationsMuted = False
 
@@ -67,18 +80,9 @@ class Graphics:
         # initialize the root window
         self.root = tki.Tk()
         self.root.wm_state('zoomed')
-        self.root.grid_columnconfigure(0, weight=1)
-        self.root.grid_columnconfigure(1, weight=1)
-        self.root.grid_columnconfigure(2, weight=1)
-        self.root.grid_columnconfigure(3, weight=1)
-        self.root.grid_columnconfigure(4, weight=1)
-        self.root.grid_columnconfigure(5, weight=1)
-        self.root.grid_columnconfigure(6, weight=1)
-        self.root.grid_columnconfigure(7, weight=1)
-        self.root.grid_columnconfigure(8, weight=1)
-        self.root.grid_columnconfigure(9, weight=1)
-        self.root.grid_columnconfigure(10, weight=1)
-        self.root.grid_columnconfigure(11, weight=1)
+        for i in range(12):
+            self.root.grid_columnconfigure(i, weight=1)
+
         self.root.grid_rowconfigure(0, weight=2)
         self.root.grid_rowconfigure(1, weight=1)
         self.root.grid_rowconfigure(2, weight=1)
@@ -96,24 +100,24 @@ class Graphics:
         # Put feed toggle buttons under main feed
         self.toggleFeedBtns = []
         self.toggleFeedBtns.append(tki.Button(self.root, text="Prev Feed",
-                                              command=lambda: self.prev_feed(FeedScreens.Main)))
+                                              command=lambda: self.prev_feed(ScreenSelections.Main)))
         self.toggleFeedBtns[FeedModificationButtons.MainPrev.value].grid(row=1, column=4, columnspan=2, sticky='nesw')
 
         self.toggleFeedBtns.append(tki.Button(self.root, text="Next Feed",
-                                          command=lambda: self.next_feed(FeedScreens.Main)))
+                                              command=lambda: self.next_feed(ScreenSelections.Main)))
         self.toggleFeedBtns[FeedModificationButtons.MainNext.value].grid(row=1, column=6, columnspan=2, sticky='nesw')
 
 
         # Buttons for splitscreen mode
         self.toggleFeedBtns.append(tki.Button(self.root, text="Prev Feed",
-                                     command=lambda: self.prev_feed(FeedScreens.Main)))
+                                              command=lambda: self.prev_feed(ScreenSelections.SplitLeft)))
         self.toggleFeedBtns.append(tki.Button(self.root, text="Next Feed",
-                                          command=lambda: self.next_feed(FeedScreens.Main)))
+                                              command=lambda: self.next_feed(ScreenSelections.SplitLeft)))
 
         self.toggleFeedBtns.append(tki.Button(self.root, text="Prev Feed",
-                                       command=lambda: self.prev_feed(FeedScreens.Main)))
+                                              command=lambda: self.prev_feed(ScreenSelections.SplitRight)))
         self.toggleFeedBtns.append(tki.Button(self.root, text="Next Feed",
-                                          command=lambda: self.next_feed(FeedScreens.Main)))
+                                              command=lambda: self.next_feed(ScreenSelections.SplitRight)))
 
 
         # start a thread that constantly pools the video sensor for
@@ -134,7 +138,6 @@ class Graphics:
         self.root.quit()
 
     def video_loop(self):
-        x = 0
         while not self.stopEvent.is_set():
 
             # Capture Input
@@ -144,94 +147,82 @@ class Graphics:
             if keyVal & 0xFF == ord('a'):
                 stitch.calibrate()
 
-            global SCREEN_IDX
-            if keyVal & 0xFF == ord('1'):
-                SCREEN_IDX = 1
-            elif keyVal & 0xFF == ord('2'):
-                SCREEN_IDX = 2
-            elif keyVal & 0xFF == ord('3'):
-                SCREEN_IDX = 3
-            elif keyVal & 0xFF == ord('4'):
-                SCREEN_IDX = 4
+            for camera in Cameras:
+                if len(self.camList) > camera.value:
+                    # Get frame from video feeds
+                    self.camFeeds[camera] = self.get_webcam_frame(self.camList[camera.value])
 
-            # Get frame from video feeds
-            cam_feeds = [self.get_webcam_frame(x) for x in self.cam_list]
+                    # update the actual feeds with displayable image data
+                    self.update_feed(camera)
 
-            height, width, channels = cam_feeds[0].shape
+            if len(self.camList) == 2:
+                # update feeds where 2 images are stitched together
+                # TODO: need to do this
+                print("do this pls")
 
-            if np.any(self.cam_list == None):
-                continue
-            else:
-                x += 1
+            #if len(self.camList) == 3:
+            #    # update feeds where 3 images are stitched together
+            #    feedsToStitch = [self.camFeeds[Cameras.Left],
+            #                self.camFeeds[Cameras.Rear],
+            #                self.camFeeds[Cameras.Right]]
+            #    self.feedList[FeedList.Overhead] = stitch.stitch(feedsToStitch)
 
-            self.display_multiple_feeds(*cam_feeds)
+            # update shown panels
+            self.update_panels()
 
-    def display_multiple_feeds(self, *args):
-        arglist = []
-        for arg in args:
-            arglist.append(arg)
-
-        if (len(args) == 1):
-            # Don't concatenate if only one image
-            # if the panel is not None, we need to initialize it
-            self.display_feed(*args)
-
-        else:
-            # Concatenate images in list and scale them so that they all fit on screen
-
-            # REMOVE THIS LINE FOR 3 CAMERAS TO WORK AGAAIN YOU FOOOOOOL
-            arglist.append(arglist[-1])
-            stitched_image = stitch.stitch(arglist)
-
-            # Show feed L
-            if (SCREEN_IDX == 1):
-                cv2.imshow('Output', args[0])
-            # Show feed M
-            elif (SCREEN_IDX == 2):
-                cv2.imshow('Output', args[1])
-            # Show feed R
-            elif (SCREEN_IDX == 3):
-                cv2.imshow('Output', args[2])
-            # Show stitched feed
-            else:
-                cv2.imshow('Output', stitched_image)
-            # image_to_show = cv2.resize(np.concatenate(arglist, axis=1), None, fx=0.6666, fy=0.6666)
-            # cv2.imshow('frame', image_to_show)
-
-    def display_feed(self, img_array):
+    def update_feed(self, camera):
         try:
             # Convert array from BGR to RGB and then to tkinter image
-            img_array = cv2.cvtColor(img_array, cv2.COLOR_BGR2RGB)
+            img_array = cv2.cvtColor(self.camFeeds[camera], cv2.COLOR_BGR2RGB)
             image = Image.fromarray(img_array)
             image = ImageTk.PhotoImage(image)
 
-            # initialize panel if it has not been yet
-            if self.fullScreenPanel is None:
-                self.fullScreenPanel = tki.Label(image=image)
-                self.fullScreenPanel.grid(row=0, column=2, columnspan=8)
-                self.fullScreenPanel.image = image
-
-                self.splitLeftPanel = tki.Label(image=image)
-                self.splitLeftPanel.image = image
-                self.splitRightPanel = tki.Label(image=image)
-                self.splitRightPanel.image = image
-
-            # otherwise, update the panel
-            else:
-                if self.layoutSelection.value == LayoutSettings.Fullscreen.value:
-                    self.fullScreenPanel.configure(image=image)
-                    self.fullScreenPanel.image = image
-                else:
-                    # splitscreen so update the two panels
-                    # TODO: move this to calling function if there is more than one feed
-                    self.splitLeftPanel.configure(image=image)
-                    self.splitLeftPanel.image = image
-                    self.splitRightPanel.configure(image=image)
-                    self.splitRightPanel.image = image
-
+            if camera.value == Cameras.Rear.value:
+                self.feedList[FeedList.SingleRear] = image
+            elif camera.value == Cameras.Left.value:
+                self.feedList[FeedList.SingleLeft] = image
+            elif camera.value == Cameras.Right.value:
+                self.feedList[FeedList.SingleRight] = image
 
         except RuntimeError as e:
             print("[INFO] caught a RuntimeError")
+
+
+    def update_panels(self):
+        fullScreenFeedSelection = self.feedSelections[ScreenSelections.Main.value]
+        fullScreenFeed = self.feedList[fullScreenFeedSelection]
+
+        splitLeftFeedSelection = self.feedSelections[ScreenSelections.SplitLeft.value]
+        splitLeftFeed = self.feedList[splitLeftFeedSelection]
+
+        splitRightFeedSelection = self.feedSelections[ScreenSelections.SplitRight.value]
+        splitRightFeed = self.feedList[splitRightFeedSelection]
+
+        # initialize panel if it has not been yet
+        if self.fullScreenPanel is None:
+            self.fullScreenPanel = tki.Label(image=fullScreenFeed)
+            self.fullScreenPanel.grid(row=0, column=2, columnspan=8)
+            self.fullScreenPanel.image = fullScreenFeed
+
+            self.splitLeftPanel = tki.Label(image=splitLeftFeed)
+            self.splitLeftPanel.image = splitLeftFeed
+
+            self.splitRightPanel = tki.Label(image=splitRightFeed)
+            self.splitRightPanel.image = splitRightFeed
+
+        # otherwise, update the panel
+        else:
+            if self.layoutSelection.value == LayoutSettings.Fullscreen.value:
+                self.fullScreenPanel.configure(image=fullScreenFeed)
+                self.fullScreenPanel.image = fullScreenFeed
+            else:
+                # splitscreen so update the two panels
+                self.splitLeftPanel.configure(image=splitLeftFeed)
+                self.splitLeftPanel.image = splitLeftFeed
+
+                self.splitRightPanel.configure(image=splitRightFeed)
+                self.splitRightPanel.image = splitRightFeed
+
 
     def get_webcam_frame(self, capture):
         ret, frame = capture.read()
@@ -295,8 +286,11 @@ def main():
 
     # Get camera feeds
     cam_list = []
-    for x in range(0, num_cams):
-        cam_list.append(cv2.VideoCapture(x))
+    cam_list.append(cv2.VideoCapture(0))
+    cam_list.append(cv2.VideoCapture(2))
+    cam_list.append(cv2.VideoCapture(1))
+    #for x in range(0, num_cams):
+    #    cam_list.append(cv2.VideoCapture(x))
 
     g = Graphics(cam_list)
     g.root.mainloop()
