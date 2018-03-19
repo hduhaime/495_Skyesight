@@ -10,17 +10,17 @@ SPEED_OF_SOUND = 17150
 
 class UltrasonicSensor:
 
-	def __init__(self):	
-		GPIO.setmode(GPIO.BCM)	
+	def __init__(self):
+                GPIO.setmode(GPIO.BCM)	
 		#Set the Trigger Pin to send out a pulse
-		GPIO.setup(TRIG,GPIO.OUT)	
+                GPIO.setup(TRIG,GPIO.OUT)
 		#Set the Echo Pin to receive a pulse
-		GPIO.setup(ECHO,GPIO.IN)
+                GPIO.setup(ECHO,GPIO.IN)
 
 	def __del__(self):
 		GPIO.cleanup()
 
-	def getReading():
+	def getReading(self):
 
 		GPIO.output(TRIG,True)
 		time.sleep(0.00001)
