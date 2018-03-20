@@ -8,7 +8,7 @@ import tkinter as tki
 import threading
 import numpy as np
 import cv2
-from UltrasonicSensor import UltrasonicSensor
+#from UltrasonicSensor import UltrasonicSensor
 
 import image_stitiching.stitcher.impl.__main__ as stitch_impl
 
@@ -150,45 +150,69 @@ class Graphics:
             if keyVal & 0xFF == ord('a'):
                 stitch.calibrate()
 
+            # clear all cameras
             for camera in Cameras:
-                if len(self.camList) > camera.value:
-                    # Get frame from video feeds
-                    self.camFeeds[camera] = self.get_webcam_frame(self.camList[camera.value])
+                self.camFeeds[camera] = None
 
-                    # update the actual feeds with displayable image data
-                    self.update_feed(camera)
-
-            if len(self.camList) == 2:
-                # update feeds where 2 images are stitched together
-                # TODO: need to do this
-                print("do this pls")
-
-            #if len(self.camList) == 3:
-            #    # update feeds where 3 images are stitched together
-            #    feedsToStitch = [self.camFeeds[Cameras.Left],
-            #                self.camFeeds[Cameras.Rear],
-            #                self.camFeeds[Cameras.Right]]
-            #    self.feedList[FeedList.Overhead] = stitch.stitch(feedsToStitch)
+            # update relevant feeds based on mode
+            if self.layoutSelection == LayoutSettings.Fullscreen:
+                fullScreenFeedSelection = self.feedSelections[ScreenSelections.Main.value]
+                self.update_feed(fullScreenFeedSelection)
+            else:
+                splitLeftFeedSelection = self.feedSelections[ScreenSelections.SplitLeft.value]
+                splitRightFeedSelection = self.feedSelections[ScreenSelections.SplitRight.value]
+                self.update_feed(splitLeftFeedSelection)
+                self.update_feed(splitRightFeedSelection)
 
             # update shown panels
             self.update_panels()
 
-    def update_feed(self, camera):
-        try:
-            # Convert array from BGR to RGB and then to tkinter image
-            img_array = cv2.cvtColor(self.camFeeds[camera], cv2.COLOR_BGR2RGB)
-            image = Image.fromarray(img_array)
-            image = ImageTk.PhotoImage(image)
+    def update_feed(self, feedListToUpdate):
+        # grab each camera necessary
+        if feedListToUpdate == FeedList.SingleLeft or feedListToUpdate == FeedList.DualLR\
+                                                    or feedListToUpdate == FeedList.Overhead:
+            LeftFeed = self.update_camera(Cameras.Left)
+        if feedListToUpdate == FeedList.SingleRight or feedListToUpdate == FeedList.DualRR\
+                                                    or feedListToUpdate == FeedList.Overhead:
+            RightFeed = self.update_camera(Cameras.Right)
+        if feedListToUpdate == FeedList.SingleRear or feedListToUpdate == FeedList.DualLR\
+                or feedListToUpdate == FeedList.DualRR or feedListToUpdate == FeedList.Overhead:
+            RearFeed = self.update_camera(Cameras.Rear)
 
-            if camera.value == Cameras.Rear.value:
-                self.feedList[FeedList.SingleRear] = image
-            elif camera.value == Cameras.Left.value:
-                self.feedList[FeedList.SingleLeft] = image
-            elif camera.value == Cameras.Right.value:
-                self.feedList[FeedList.SingleRight] = image
 
-        except RuntimeError as e:
-            print("[INFO] caught a RuntimeError")
+
+        if feedListToUpdate == FeedList.Overhead:
+            # stitch feeds and update
+            if LeftFeed is not None and RightFeed is not None and RearFeed is not None:
+                stitchedArray = stitch.stitch([LeftFeed, RightFeed, RearFeed])
+                stitchedImage = ImageTk.PhotoImage(Image.fromarray(stitchedArray))
+                self.feedList[feedListToUpdate] = stitchedImage
+        elif feedListToUpdate == FeedList.DualLR:
+            #TODO: add two image stitching
+            pass
+        elif feedListToUpdate == FeedList.DualRR:
+            #TODO: add two image stitching
+            pass
+        else:
+            if feedListToUpdate == FeedList.SingleLeft:
+                singleFeed = LeftFeed
+            elif feedListToUpdate == FeedList.SingleRight:
+                singleFeed = RightFeed
+            elif feedListToUpdate == FeedList.SingleRear:
+                singleFeed = RearFeed
+            if singleFeed is not None:
+                self.feedList[feedListToUpdate] = ImageTk.PhotoImage(Image.fromarray(singleFeed))
+
+
+    def update_camera(self, camera):
+        # Get frame from video feeds
+        if self.camFeeds[camera] is None:
+            if camera.value >= len(self.camList):
+                return None
+            # Only get new frame if we haven't already tried to do so
+            self.camFeeds[camera] = self.get_webcam_frame(self.camList[camera.value])
+        img_array = cv2.cvtColor(self.camFeeds[camera], cv2.COLOR_BGR2RGB)
+        return img_array
 
 
     def update_panels(self):
@@ -215,16 +239,19 @@ class Graphics:
 
         # otherwise, update the panel
         else:
-            if self.layoutSelection.value == LayoutSettings.Fullscreen.value:
-                self.fullScreenPanel.configure(image=fullScreenFeed)
-                self.fullScreenPanel.image = fullScreenFeed
-            else:
-                # splitscreen so update the two panels
-                self.splitLeftPanel.configure(image=splitLeftFeed)
-                self.splitLeftPanel.image = splitLeftFeed
+            try:
+                if self.layoutSelection.value == LayoutSettings.Fullscreen.value:
+                    self.fullScreenPanel.configure(image=fullScreenFeed)
+                    self.fullScreenPanel.image = fullScreenFeed
+                else:
+                    # splitscreen so update the two panels
+                    self.splitLeftPanel.configure(image=splitLeftFeed)
+                    self.splitLeftPanel.image = splitLeftFeed
 
-                self.splitRightPanel.configure(image=splitRightFeed)
-                self.splitRightPanel.image = splitRightFeed
+                    self.splitRightPanel.configure(image=splitRightFeed)
+                    self.splitRightPanel.image = splitRightFeed
+            except RuntimeError as e:
+                print(e)
 
 
     def get_webcam_frame(self, capture):
