@@ -169,37 +169,46 @@ class Graphics:
 
     def update_feed(self, feedListToUpdate):
         # grab each camera necessary
+        leftFeed = rightFeed = rearFeed = None
         if feedListToUpdate == FeedList.SingleLeft or feedListToUpdate == FeedList.DualLR\
                                                     or feedListToUpdate == FeedList.Overhead:
-            LeftFeed = self.update_camera(Cameras.Left)
+            leftFeed = self.update_camera(Cameras.Left)
         if feedListToUpdate == FeedList.SingleRight or feedListToUpdate == FeedList.DualRR\
                                                     or feedListToUpdate == FeedList.Overhead:
-            RightFeed = self.update_camera(Cameras.Right)
+            rightFeed = self.update_camera(Cameras.Right)
         if feedListToUpdate == FeedList.SingleRear or feedListToUpdate == FeedList.DualLR\
                 or feedListToUpdate == FeedList.DualRR or feedListToUpdate == FeedList.Overhead:
-            RearFeed = self.update_camera(Cameras.Rear)
+            rearFeed = self.update_camera(Cameras.Rear)
 
-
+        notNull = []
+        if leftFeed is not None:
+            notNull.append(leftFeed)
+        if rightFeed is not None:
+            notNull.append(rightFeed)
+        if rearFeed is not None:
+            notNull.append(rearFeed)
 
         if feedListToUpdate == FeedList.Overhead:
             # stitch feeds and update
-            if LeftFeed is not None and RightFeed is not None and RearFeed is not None:
-                stitchedArray = stitch.stitch([LeftFeed, RightFeed, RearFeed])
+            if leftFeed is not None and rightFeed is not None and rearFeed is not None:
+                stitchedArray = stitch.stitch([leftFeed, rightFeed, rearFeed])
                 stitchedImage = ImageTk.PhotoImage(Image.fromarray(stitchedArray))
                 self.feedList[feedListToUpdate] = stitchedImage
         elif feedListToUpdate == FeedList.DualLR:
-            #TODO: add two image stitching
-            pass
+            stitchedArray = stitch.stitch([notNull[0], notNull[1], notNull[0]])
+            stitchedImage = ImageTk.PhotoImage(Image.fromarray(stitchedArray))
+            self.feedList[feedListToUpdate] = stitchedImage
         elif feedListToUpdate == FeedList.DualRR:
-            #TODO: add two image stitching
-            pass
+            stitchedArray = stitch.stitch([notNull[0], notNull[1], notNull[0]])
+            stitchedImage = ImageTk.PhotoImage(Image.fromarray(stitchedArray))
+            self.feedList[feedListToUpdate] = stitchedImage
         else:
             if feedListToUpdate == FeedList.SingleLeft:
-                singleFeed = LeftFeed
+                singleFeed = leftFeed
             elif feedListToUpdate == FeedList.SingleRight:
-                singleFeed = RightFeed
+                singleFeed = rightFeed
             elif feedListToUpdate == FeedList.SingleRear:
-                singleFeed = RearFeed
+                singleFeed = rearFeed
             if singleFeed is not None:
                 self.feedList[feedListToUpdate] = ImageTk.PhotoImage(Image.fromarray(singleFeed))
 
@@ -332,6 +341,9 @@ class Graphics:
             elif posNext == FeedList.SingleRight and len(self.camList) < 3:
                 feedInvalid = True
             elif posNext == FeedList.SingleLeft and len(self.camList) < 2:
+                feedInvalid = True
+            elif posNext == FeedList.DualRR:
+                # TODO: fix this to make sure this isn't invalid in the future!!!!
                 feedInvalid = True
             else:
                 feedInvalid = False
