@@ -93,11 +93,15 @@ class Graphics:
         # Format buttons on bottom of screen
         self.selectLayoutBtn = tki.Button(self.root, text="Make Splitscreen",
                                           command=self.switch_to_splitscreen)
-        self.selectLayoutBtn.grid(row=2, column=0, columnspan=6, sticky='nesw')
+        self.selectLayoutBtn.grid(row=2, column=0, columnspan=4, sticky='nesw')
+
+        self.recalibrateBtn = tki.Button(self.root, text="Recalibrate",
+                                         command=stitch.calibrate)
+        self.recalibrateBtn.grid(row=2, column=4, columnspan=4, sticky='nesw')
 
         self.muteNotificationsBtn = tki.Button(self.root, text="Mute Notifications",
                                                command=self.mute_unmute_notifications)
-        self.muteNotificationsBtn.grid(row=2, column=6, columnspan=6, sticky='nesw')
+        self.muteNotificationsBtn.grid(row=2, column=8, columnspan=4, sticky='nesw')
 
 
         # Put feed toggle buttons under main feed
