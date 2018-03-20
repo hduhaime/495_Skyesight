@@ -298,12 +298,48 @@ class Graphics:
     def prev_feed(self, feedSelection):
         current = self.feedSelections[feedSelection.value]
         feedListVals = [feedList.value for feedList in FeedList]
-        self.feedSelections[feedSelection.value] = FeedList(feedListVals[current.value - 1])
+        posNext = FeedList(feedListVals[current.value - 1])
+
+        feedInvalid = True
+        while feedInvalid:
+            if posNext == FeedList.Overhead and len(self.camList) < 3:
+                feedInvalid = True
+            elif (posNext == FeedList.DualRR or posNext == FeedList.DualLR) and len(self.camList) < 2:
+                feedInvalid = True
+            elif posNext == FeedList.SingleRight and len(self.camList) < 3:
+                feedInvalid = True
+            elif posNext == FeedList.SingleLeft and len(self.camList) < 2:
+                feedInvalid = True
+            else:
+                feedInvalid = False
+
+            if feedInvalid:
+                posNext = FeedList(feedListVals[posNext.value - 1])
+
+        self.feedSelections[feedSelection.value] = posNext
 
     def next_feed(self, feedSelection):
         current = self.feedSelections[feedSelection.value]
         feedListVals = [feedList.value for feedList in FeedList]
-        self.feedSelections[feedSelection.value] = FeedList((feedListVals[current.value] + 1) % len(feedListVals))
+        posNext = FeedList((feedListVals[current.value] + 1) % len(feedListVals))
+
+        feedInvalid = True
+        while feedInvalid:
+            if posNext == FeedList.Overhead and len(self.camList) < 3:
+                feedInvalid = True
+            elif (posNext == FeedList.DualRR or posNext == FeedList.DualLR) and len(self.camList) < 2:
+                feedInvalid = True
+            elif posNext == FeedList.SingleRight and len(self.camList) < 3:
+                feedInvalid = True
+            elif posNext == FeedList.SingleLeft and len(self.camList) < 2:
+                feedInvalid = True
+            else:
+                feedInvalid = False
+
+            if feedInvalid:
+                posNext = FeedList((feedListVals[posNext.value] + 1) % len(feedListVals))
+
+        self.feedSelections[feedSelection.value] = posNext
 
     def mute_unmute_notifications(self):
         if self.notificationsMuted:
