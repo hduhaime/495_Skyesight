@@ -6,13 +6,13 @@ def getReading():
     TRIG= 4
     ECHO = 18
 
-    print 'Distance Measurement in Progress'
+    print('Distance Measurement in Progress')
 
     GPIO.setup(TRIG, GPIO.OUT)
     GPIO.setup(ECHO, GPIO.IN)
 
     GPIO.output(TRIG, False)
-    print 'waiting for sensor'
+    print('waiting for sensor')
     time.sleep(2)
 
     GPIO.output(TRIG, True)
@@ -29,7 +29,7 @@ def getReading():
     distance = pulse_duration*17150
     distance = round(distance,2)
 
-    print 'Distance:',distance,'cm'
+    print('Distance:',distance,'cm')
 
     GPIO.cleanup()
     

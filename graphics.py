@@ -8,7 +8,7 @@ import tkinter as tki
 import threading
 import numpy as np
 import cv2
-#from UltrasonicSensor import UltrasonicSensor
+from sensor import *
 
 import image_stitiching.stitcher.impl.__main__ as stitch_impl
 
@@ -54,8 +54,9 @@ class Graphics:
     def __init__(self, cam_list):
         self.thread = None
         self.stopEvent = None
-        #self.sensor = UltrasonicSensor()
-        #print(self.sensor.getReading())
+        self.sensorWindow = None
+
+
         self.camList = cam_list
         self.camFeeds = {}
         for camera in Cameras:
@@ -149,6 +150,13 @@ class Graphics:
                 break
             if keyVal & 0xFF == ord('a'):
                 stitch.calibrate()
+
+            readingVal = getReading()
+            if readingVal is not None and self.sensorWindow is None and not self.notificationsMuted:
+                self.sensorWindow = tki.Toplevel()
+                tki.Label(self.sensorWindow, text="Proximity sensor reading = " + str(readingVal)).pack()
+                tki.Button(self.sensorWindow, text="Mute Notifications", command=self.mute_unmute_notifications).pack()
+
 
             # clear all cameras
             for camera in Cameras:
@@ -360,6 +368,10 @@ class Graphics:
         else:
             self.notificationsMuted = True
             self.muteNotificationsBtn.config(text="Unmute Notifications")
+
+            if self.sensorWindow is not None:
+                self.sensorWindow.destroy()
+                self.sensorWindow = None
 
 
 def main():
