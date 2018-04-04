@@ -155,7 +155,7 @@ class Graphics:
             if keyVal & 0xFF == ord('a'):
                 stitch.calibrate()
 
-            readingVal = getReading()
+            readingVal = 1#getReading()
             if readingVal is not None and self.sensorWindow is None and not self.notificationsMuted:
                 self.sensorWindow = tki.Toplevel()
                 tki.Label(self.sensorWindow, text="Proximity sensor reading = " + str(readingVal)).pack()
@@ -208,10 +208,12 @@ class Graphics:
                 self.feedList[feedListToUpdate] = stitchedImage
         elif feedListToUpdate == FeedList.DualLR:
             stitchedArray = stitch.stitch([notNull[0], notNull[1], notNull[0]])
+            stitchedArray = stitchedArray[260:1160,220:1160,:]
             stitchedImage = ImageTk.PhotoImage(Image.fromarray(stitchedArray))
             self.feedList[feedListToUpdate] = stitchedImage
         elif feedListToUpdate == FeedList.DualRR:
             stitchedArray = stitch.stitch([notNull[0], notNull[1], notNull[0]])
+            stitchedArray = stitchedArray[260:1160,220:1160,:]
             stitchedImage = ImageTk.PhotoImage(Image.fromarray(stitchedArray))
             self.feedList[feedListToUpdate] = stitchedImage
         else:
@@ -248,14 +250,14 @@ class Graphics:
 
         # initialize panel if it has not been yet
         if self.fullScreenPanel is None:
-            self.fullScreenPanel = tki.Label(image=fullScreenFeed, width=300, height=300)
+            self.fullScreenPanel = tki.Label(image=fullScreenFeed, width=400, height=300)
             self.fullScreenPanel.grid(row=0, column=2, columnspan=8)
             self.fullScreenPanel.image = fullScreenFeed
 
-            self.splitLeftPanel = tki.Label(image=splitLeftFeed, width=300, height=300)
+            self.splitLeftPanel = tki.Label(image=splitLeftFeed, width=400, height=300)
             self.splitLeftPanel.image = splitLeftFeed
 
-            self.splitRightPanel = tki.Label(image=splitRightFeed, width=300, height=300)
+            self.splitRightPanel = tki.Label(image=splitRightFeed, width=400, height=300)
             self.splitRightPanel.image = splitRightFeed
 
         # otherwise, update the panel
@@ -299,7 +301,7 @@ class Graphics:
         self.toggleFeedBtns[FeedModificationButtons.MainPrev.value].grid(row=1, column=4, columnspan=2, sticky='nesw')
         self.toggleFeedBtns[FeedModificationButtons.MainNext.value].grid(row=1, column=6, columnspan=2, sticky='nesw')
         self.fullScreenPanel.grid(row=0, column=2, columnspan=8)
-        self.fullScreenPanel.configure(height=300, width=300)
+        self.fullScreenPanel.configure(height=300, width=400)
 
     def switch_to_splitscreen(self):
         self.layoutSelection = LayoutSettings.Splitscreen
