@@ -3,7 +3,7 @@ import cv2
 from PIL import Image
 from PIL import ImageTk
 from Util import DisplaySelection
-import image_stitiching.stitcher.impl.__main__ as stitch_impl
+from image_stitching import Stitcher
 
 
 class FeedSelections(Enum):
@@ -35,7 +35,7 @@ class Model:
                                 DisplaySelection.Right: FeedSelections.Right
                                 }
 
-        self.stitcher = stitch_impl.Stitcher()
+        self.stitcher = Stitcher()
         self.notificationsMuted = False
         self.leftCapture = leftCapture
         self.rightCapture = rightCapture
