@@ -31,10 +31,6 @@ class Sensor:
 
 
     def startSensors(self):
-
-        GPIO.setmode(GPIO.BCM)
-        TRIG= 4
-        ECHO = 18
         
         # while True:
 
