@@ -161,4 +161,3 @@ class Stitcher:
     
         # return the visualization
         return vis 
-
