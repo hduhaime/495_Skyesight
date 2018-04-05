@@ -1,7 +1,7 @@
-import RPi.GPIO as GPIO
-import time
+cimport time
 from threading import Thread, Lock
 
+TO_METRES = 0.01
 class Sensor:
 
     def __init__(self):
@@ -32,39 +32,19 @@ class Sensor:
 
     def startSensors(self):
         
-        # while True:
+        while True:
 
-        #     GPIO.setup(TRIG, GPIO.OUT)
-        #     GPIO.setup(ECHO, GPIO.IN)
+            #Call the API server running on python
+            response = requests.get("http://api.open-notify.org/iss-now.json")
 
-        #     GPIO.output(TRIG, False)
-        #     print('waiting for sensor')
-        #     time.sleep(2)
+            if response.status_code == 200:
 
-        #     GPIO.output(TRIG, True)
-        #     time.sleep(0.00001)
-        #     GPIO.output(TRIG, False)
+                dist_in_metres = response["distance"]*TO_METRES
 
-        #     while GPIO.input(ECHO) == 0:
-        #         pulse_start = time.time()
-
-        #     while(GPIO.input(ECHO) == 1):
-        #         pulse_end = time.time()
-
-        #     pulse_duration = pulse_end - pulse_start
-        #     distance = pulse_duration*17150
-        #     distance = round(distance,2)
-
-        #     print('Distance:',distance,'cm')
-
-        #     GPIO.cleanup()
-        
-        #     dist_in_metres = distance/100
-
-        #     self.mutex.acquire()
-        #     if dist_in_metres < self.threshold:
-        #         self.distance = dist_in_metres
-            
-        #     self.mutex.release()
+                self.mutex.acquire()
+                if dist_in_metres < self.threshold:
+                    self.distance = dist_in_metres
+                
+                self.mutex.release()
     
         
