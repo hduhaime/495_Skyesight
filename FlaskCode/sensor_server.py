@@ -1,15 +1,16 @@
 import RPi.GPIO as GPIO
 from flask import Flask
-from flask import jsonify
+from flask import jsonify, request
+import time
 
 app = Flask(__name__)
 
-@app.route("/fetchSensorData")
+@app.route("/fetchSensorData", methods=['POST'])
 def fetchSensorData():
 
     GPIO.setmode(GPIO.BCM)
-    TRIG= 4
-    ECHO = 18
+    TRIG= int(request.form['TRIG'])
+    ECHO = int(request.form['ECHO'])
 
     GPIO.setup(TRIG, GPIO.OUT)
     GPIO.setup(ECHO, GPIO.IN)
@@ -22,6 +23,8 @@ def fetchSensorData():
     time.sleep(0.00001)
     GPIO.output(TRIG, False)
 
+    pulse_start = 0
+    pulse_end = 0
     while GPIO.input(ECHO) == 0:
         pulse_start = time.time()
 
@@ -33,7 +36,7 @@ def fetchSensorData():
     distance = round(distance,2)
 
     GPIO.cleanup()
-
+    
     sensor_data = {"distance": distance}
 
     return jsonify(sensor_data)
