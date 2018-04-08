@@ -90,6 +90,13 @@ class Stitcher:
         canvas[resultL > 0] = resultL[resultL > 0]
         canvas[resultM > 0] = resultM[resultM > 0]
 
+        # Crop out as much negative space as possible
+        trim = canvas > 0
+        mat = np.array([[y[0] for y in x] for x in trim])
+        
+        cropped = canvas[np.ix_(mat.any(1), mat.any(0))]
+
+
         # canvasA[0:resultA.shape[0], 0:resultA.shape[1]] = resultA
         # resultB_start = shift
         # resultB_end = resultB_start + resultB.shape[1]
@@ -104,7 +111,7 @@ class Stitcher:
         #canvas[resultM > 0] = resultM[resultM > 0]
         #canvasA + canvasB
 
-        return cv2.resize(canvas, None, fx=0.444444, fy=0.444444)
+        return cv2.resize(cropped, None, fx=0.444444, fy=0.444444)
 
     def get_homography(self, pts1, pts2, shift_x, shift_y, reprojThresh):
         #for pt in pts2:
