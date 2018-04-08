@@ -68,16 +68,19 @@ class Model:
 
         if feedSelection == FeedSelections.Overhead:
             # Pull from all feeds and stitch them together
-            leftFeed = self.getWebcamFrame(self.leftCapture)
-            rightFeed = self.getWebcamFrame(self.rightCapture)
-            rearFeed = self.getWebcamFrame(self.rearCapture)
+            try:
+                leftFeed = self.getWebcamFrame(self.leftCapture)
+                rightFeed = self.getWebcamFrame(self.rightCapture)
+                rearFeed = self.getWebcamFrame(self.rearCapture)
 
-            if leftFeed is None or rightFeed is None or rearFeed is None:
+                if leftFeed is None or rightFeed is None or rearFeed is None:
+                    return ImageTk.PhotoImage(feedToDefaultMap[feedSelection])
+
+                stitchedArray = self.stitcher.stitch([leftFeed, rightFeed, rearFeed])
+                stitchedImage = ImageTk.PhotoImage(Image.fromarray(stitchedArray))
+                return stitchedImage
+            except RuntimeError:
                 return ImageTk.PhotoImage(feedToDefaultMap[feedSelection])
-
-            stitchedArray = self.stitcher.stitch([leftFeed, rightFeed, rearFeed])
-            stitchedImage = ImageTk.PhotoImage(Image.fromarray(stitchedArray))
-            return stitchedImage
         elif feedSelection == FeedSelections.Left:
             leftFeed = self.getWebcamFrame(self.leftCapture)
             if leftFeed is None:
