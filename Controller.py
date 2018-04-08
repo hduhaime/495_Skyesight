@@ -8,8 +8,8 @@ from Util import DisplaySelection
 
 
 class Controller:
-    def __init__(self, leftCapture, rightCapture, rearCapture):
-        self.model = Model(leftCapture, rightCapture, rearCapture)
+    def __init__(self, leftCapture, rightCapture, rearCapture, sensorVals):
+        self.model = Model(leftCapture, rightCapture, rearCapture, sensorVals)
         self.notificationsMuted = False
         self.isFullScreen = True
         self.continueRunning = True
@@ -78,7 +78,13 @@ def main():
     rightCam = cv2.VideoCapture(1)
     rearCam = cv2.VideoCapture(2)
 
-    controller = Controller(leftCam, rightCam, rearCam)
+    sensorVals = {
+        SensorList.Left : {
+                        GPIO.TRIG: 4,
+                        GPIO.ECHO: 18
+                    }
+    }
+    controller = Controller(leftCam, rightCam, rearCam, sensorVals)
     controller.run()
 
     leftCam.release()
