@@ -84,3 +84,6 @@ class View:
     def updatePanel(self, displaySelection, image):
         self.panelMap[displaySelection].configure(image=image)
         self.panelMap[displaySelection].image = image
+
+    def displayNotification(self, distance):
+        pass

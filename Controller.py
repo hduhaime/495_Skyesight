@@ -2,9 +2,10 @@ import tkinter as tki
 import cv2
 
 from Model import Model
+from Model import SensorList
+from Model import GPIO
 from View import View
-from Util import OnScreenButtons
-from Util import DisplaySelection
+from Util import *
 
 
 class Controller:
@@ -47,6 +48,10 @@ class Controller:
             if not self.isFullScreen:
                 rightFrame = self.model.getFeed(DisplaySelection.Right)
                 self.view.updatePanel(DisplaySelection.Right, rightFrame)
+
+            distance = self.model.getReading()
+            if distance is not None:
+                self.view.displayNotification(distance)
 
             self.root.update_idletasks()
             self.root.update()

@@ -2,7 +2,7 @@ from enum import Enum
 import cv2
 from PIL import Image
 from PIL import ImageTk
-from Util import DisplaySelection
+from Util import *
 from image_stitching import Stitcher
 from sensor import Sensor
 from threading import Thread, Lock
@@ -19,15 +19,6 @@ class CamList(Enum):
     Left = 0
     Right = 1
     Rear = 2
-
-class SensorList(Enum):
-    Left = 0
-    Right = 1
-    Rear = 2
-
-class GPIO(Enum):
-    TRIG = 0
-    ECHO = 1
 
 feedToCamMap = {
                 FeedSelections.Overhead: [CamList.Left, CamList.Right, CamList.Rear],
@@ -58,7 +49,7 @@ class Model:
         self.leftSensor = Sensor(sensorVals[SensorList.Left][GPIO.TRIG], sensorVals[SensorList.Left][GPIO.ECHO])
 
         #Run a thread to start the readings
-        t = Thread(target = self.leftSensor.startSensors())
+        t = Thread(target = self.leftSensor.startSensors)
         t.start()
 
         self.notificationsMuted = False
@@ -66,6 +57,8 @@ class Model:
         self.rightCapture = rightCapture
         self.rearCapture = rearCapture
 
+    def changeFeed(self, displaySelection, desiredFeedSelection):
+        self.displayToFeedMap[displaySelection] = desiredFeedSelection
 
     def nextFeed(self, displaySelection):
         curSelection = self.displayToFeedMap[displaySelection]
@@ -145,8 +138,6 @@ class Model:
 
         #rightSensor.setThreshold(threshold)
         #rearSensor.setThreshold(threshold)
-
-
 
     @staticmethod
     def getWebcamFrame(capture):

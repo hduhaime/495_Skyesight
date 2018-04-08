@@ -40,7 +40,6 @@ class Sensor:
 
             #Call the API server running on python
             response = requests.post("http://"+IP+"/fetchSensorData", data={'TRIG':self.TRIG, 'ECHO':self.ECHO})
-            print(response.json())
             if response.status_code == 200:
 
                 dist_in_metres = (response.json())["distance"]*TO_METRES
@@ -50,5 +49,3 @@ class Sensor:
                     self.distance = dist_in_metres
                 
                 self.mutex.release()
-    
-        
