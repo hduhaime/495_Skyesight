@@ -1,13 +1,17 @@
-import RPi.GPIO as GPIO
 import time
 from threading import Thread, Lock
+import requests
 
+TO_METRES = 0.01
+IP = "35.1.53.166"
 class Sensor:
 
-    def __init__(self):
+    def __init__(self, TRIG, ECHO):
         self.distance = 0
         self.mutex = Lock()
         self.threshold = 1
+        self.TRIG = TRIG
+        self.ECHO = ECHO
 
     def setThreshold(self, threshold):
 
@@ -31,44 +35,20 @@ class Sensor:
 
 
     def startSensors(self):
-
-        GPIO.setmode(GPIO.BCM)
-        TRIG= 4
-        ECHO = 18
         
-        # while True:
+        while True:
 
-        #     GPIO.setup(TRIG, GPIO.OUT)
-        #     GPIO.setup(ECHO, GPIO.IN)
+            #Call the API server running on python
+            response = requests.post("http://"+IP+"/fetchSensorData", data={'TRIG':self.TRIG, 'ECHO':self.ECHO})
+            print(response.json())
+            if response.status_code == 200:
 
-        #     GPIO.output(TRIG, False)
-        #     print('waiting for sensor')
-        #     time.sleep(2)
+                dist_in_metres = (response.json())["distance"]*TO_METRES
 
-        #     GPIO.output(TRIG, True)
-        #     time.sleep(0.00001)
-        #     GPIO.output(TRIG, False)
-
-        #     while GPIO.input(ECHO) == 0:
-        #         pulse_start = time.time()
-
-        #     while(GPIO.input(ECHO) == 1):
-        #         pulse_end = time.time()
-
-        #     pulse_duration = pulse_end - pulse_start
-        #     distance = pulse_duration*17150
-        #     distance = round(distance,2)
-
-        #     print('Distance:',distance,'cm')
-
-        #     GPIO.cleanup()
-        
-        #     dist_in_metres = distance/100
-
-        #     self.mutex.acquire()
-        #     if dist_in_metres < self.threshold:
-        #         self.distance = dist_in_metres
-            
-        #     self.mutex.release()
+                self.mutex.acquire()
+                if dist_in_metres < self.threshold:
+                    self.distance = dist_in_metres
+                
+                self.mutex.release()
     
         

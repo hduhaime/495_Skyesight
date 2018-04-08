@@ -4,6 +4,8 @@ from PIL import Image
 from PIL import ImageTk
 from Util import DisplaySelection
 from image_stitching import Stitcher
+from sensor import Sensor
+from threading import Thread, Lock
 
 
 class FeedSelections(Enum):
@@ -18,6 +20,14 @@ class CamList(Enum):
     Right = 1
     Rear = 2
 
+class SensorList(Enum):
+    Left = 0
+    Right = 1
+    Rear = 2
+
+class GPIO(Enum):
+    TRIG = 0
+    ECHO = 1
 
 feedToCamMap = {
                 FeedSelections.Overhead: [CamList.Left, CamList.Right, CamList.Rear],
@@ -36,13 +46,21 @@ feedToDefaultMap = {
                     }
 
 class Model:
-    def __init__(self, leftCapture, rightCapture, rearCapture):
+    def __init__(self, leftCapture, rightCapture, rearCapture, sensorVals):
         self.displayToFeedMap = {
                                 DisplaySelection.MainLeft: FeedSelections.Overhead,
                                 DisplaySelection.Right: FeedSelections.Overhead
                                 }
 
         self.stitcher = Stitcher()
+
+        #Create the left sensor
+        self.leftSensor = Sensor(sensorVals[SensorList.Left][GPIO.TRIG], sensorVals[SensorList.Left][GPIO.ECHO])
+
+        #Run a thread to start the readings
+        t = Thread(target = self.leftSensor.startSensors())
+        t.start()
+
         self.notificationsMuted = False
         self.leftCapture = leftCapture
         self.rightCapture = rightCapture
@@ -103,6 +121,31 @@ class Model:
 
     def recalibrate(self):
         self.stitcher.calibrate()
+
+
+    def getReading(self):
+
+        readings = {
+            SensorList.Left: self.leftSensor.getReading()
+        }
+
+        '''
+        readings = {
+            SensorList.Left: self.leftSensor.getReading(),
+            SensorList.Right: self.rightSensor.getReading(),
+            SensorList.Rear: self.rearSensor.getReading(),
+
+        }
+        '''
+
+        return readings
+
+    def setThreshold(self, threshold):
+        leftSensor.setThreshold(threshold)
+
+        #rightSensor.setThreshold(threshold)
+        #rearSensor.setThreshold(threshold)
+
 
 
     @staticmethod
