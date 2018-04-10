@@ -4,6 +4,7 @@ from enum import Enum
 class DisplaySelection(Enum):
     MainLeft = 0
     Right = 1
+    Left = 2
 
 
 class OnScreenButtons(Enum):
