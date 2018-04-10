@@ -5,7 +5,7 @@ from PIL import ImageTk
 from Util import *
 from image_stitching import Stitcher
 from sensor import Sensor
-from threading import Thread, Lock
+from threading import Thread
 
 
 class FeedSelections(Enum):
@@ -13,12 +13,6 @@ class FeedSelections(Enum):
     Left = 1
     Rear = 2
     Right = 3
-
-
-class CamList(Enum):
-    Left = 0
-    Right = 1
-    Rear = 2
 
 feedToCamMap = {
                 FeedSelections.Overhead: [CamList.Left, CamList.Right, CamList.Rear],
@@ -46,7 +40,7 @@ class Model:
         self.stitcher = Stitcher()
 
         #Create the left sensor
-        self.leftSensor = Sensor(sensorVals[SensorList.Left][GPIO.TRIG], sensorVals[SensorList.Left][GPIO.ECHO])
+        self.leftSensor = Sensor(sensorVals[CamList.Left][GPIO.TRIG], sensorVals[CamList.Left][GPIO.ECHO])
 
         #Run a thread to start the readings
         t = Thread(target = self.leftSensor.startSensors)
@@ -119,14 +113,14 @@ class Model:
     def getReading(self):
 
         readings = {
-            SensorList.Left: self.leftSensor.getReading()
+            CamList.Left: self.leftSensor.getReading()
         }
 
         '''
         readings = {
-            SensorList.Left: self.leftSensor.getReading(),
-            SensorList.Right: self.rightSensor.getReading(),
-            SensorList.Rear: self.rearSensor.getReading(),
+            CamList.Left: self.leftSensor.getReading(),
+            CamList.Right: self.rightSensor.getReading(),
+            CamList.Rear: self.rearSensor.getReading(),
 
         }
         '''

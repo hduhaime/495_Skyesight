@@ -15,7 +15,7 @@ class OnScreenButtons(Enum):
     RightPrevFeed = 5
     RightNextFeed = 6
 
-class SensorList(Enum):
+class CamList(Enum):
     Left = 0
     Right = 1
     Rear = 2
@@ -23,3 +23,5 @@ class SensorList(Enum):
 class GPIO(Enum):
     TRIG = 0
     ECHO = 1
+
+

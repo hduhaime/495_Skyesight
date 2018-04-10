@@ -2,7 +2,6 @@ import tkinter as tki
 import cv2
 
 from Model import Model
-from Model import SensorList
 from Model import GPIO
 from View import View
 from Util import *
@@ -49,9 +48,16 @@ class Controller:
                 rightFrame = self.model.getFeed(DisplaySelection.Right)
                 self.view.updatePanel(DisplaySelection.Right, rightFrame)
 
-            distance = self.model.getReading()
-            if distance is not None:
-                self.view.displayNotification(distance)
+            sensorToReadingMap = self.model.getReading()
+            closestValue = None
+            closestCamera = None
+            for key, value in sensorToReadingMap:
+                if closestValue is None:
+                    closestValue = value
+                elif value is not None:
+                    if closestValue > value:
+                        closestValue = value
+
 
             self.root.update_idletasks()
             self.root.update()
@@ -84,7 +90,7 @@ def main():
     rearCam = cv2.VideoCapture(2)
 
     sensorVals = {
-        SensorList.Left : {
+        CamList.Left : {
                         GPIO.TRIG: 4,
                         GPIO.ECHO: 18
                     }
