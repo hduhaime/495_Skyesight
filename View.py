@@ -72,6 +72,7 @@ class WindowWrapper(BoxLayout):
         pass
 
     def updatePanel(self, displaySelection, image):
+
         #TODO: Labels
         self.panelMap[displaySelection].video.update_feed(image)
 

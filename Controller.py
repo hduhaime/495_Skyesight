@@ -3,15 +3,14 @@ import cv2
 
 from Model import Model
 from View import viewApp as View
-from Util import OnScreenButtons
-from Util import DisplaySelection
-
+from Model import GPIO
+from Util import *
 import threading
 
 
 class Controller:
-    def __init__(self, leftCapture, rightCapture, rearCapture):
-        self.model = Model(leftCapture, rightCapture, rearCapture)
+    def __init__(self, leftCapture, rightCapture, rearCapture, sensorVals):
+        self.model = Model(leftCapture, rightCapture, rearCapture, sensorVals)
         self.notificationsMuted = False
         self.isFullScreen = True
         self.continueRunning = True
@@ -75,6 +74,16 @@ class Controller:
                 #self.root.update_idletasks()
                 #self.root.update()
 
+                sensorToReadingMap = self.model.getReading()
+                closestValue = None
+                closestCamera = None
+                for key, value in sensorToReadingMap:
+                    if closestValue is None:
+                        closestValue = value
+                    elif value is not None:
+                        if closestValue > value:
+                            closestValue = value
+
         #self.root.quit()
 
     def pressNext(self, displaySelection):
@@ -102,7 +111,13 @@ def main():
     rightCam = cv2.VideoCapture(1)
     rearCam = cv2.VideoCapture(2)
 
-    controller = Controller(leftCam, rightCam, rearCam)
+    sensorVals = {
+        CamList.Left : {
+                        GPIO.TRIG: 4,
+                        GPIO.ECHO: 18
+                    }
+    }
+    controller = Controller(leftCam, rightCam, rearCam, sensorVals)
     controller.run()
 
     leftCam.release()
