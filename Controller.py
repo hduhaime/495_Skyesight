@@ -9,13 +9,14 @@ import threading
 
 
 class Controller:
-    def __init__(self, leftCapture, rightCapture, rearCapture, sensorVals):
+    def __init__(self, view, leftCapture, rightCapture, rearCapture, sensorVals):
         self.model = Model(leftCapture, rightCapture, rearCapture, sensorVals)
         self.notificationsMuted = False
         self.isFullScreen = True
         self.continueRunning = True
 
-        #TODO:
+        self.view = view
+
         # initialize tkinter components and View
         # self.root = tki.Tk()
         # set a callback to handle when the window is closed
@@ -41,48 +42,48 @@ class Controller:
             "onToggleScreen": self.toggleScreen,
             "onRecalibrate": self.model.recalibrate,
             "onToggleNotifications": self.toggleNotifications,
-            "onPrimaryPrev": self.pressPrev(DisplaySelection.MainLeft),
+            "onPrimaryPrev": lambda: self.pressPrev(DisplaySelection.MainLeft),
             "onPrimaryNext": lambda: self.pressNext(DisplaySelection.MainLeft),
             "onSecondaryPrev": lambda: self.pressPrev(DisplaySelection.Right),
             "onSecondaryNext": lambda: self.pressNext(DisplaySelection.Right),
             "onChangeMaxDistance": None #TODO:
 
         }
-        self.view = View(buttonMap)
-        print("CREATE_VIEW")
-        back_thread = threading.Thread(target=self.view.run)
-        back_thread.setDaemon(True)
-        back_thread.start()
-        #self.view.run()
-        print("RUN_VIEW")
 
+        view.initialize(buttonMap)
 
     def onClose(self):
         self.continueRunning = False
 
     def run(self):
-        print("HERE")
         while self.continueRunning:
-            if(self.view.fxns): #TODO: Wait until fxns object is initialized
-                frame = self.model.getFeed(DisplaySelection.MainLeft)
-                self.view.fxns.updatePanel(DisplaySelection.MainLeft, frame)
+            if(self.view.fxns):
+
+                frame, text = self.model.getFeed(DisplaySelection.MainLeft)
+
+                if self.isFullScreen:
+
+                    self.view.fxns.updatePanel(VideoSelection.Main, frame, text)
 
                 if not self.isFullScreen:
-                    rightFrame = self.model.getFeed(DisplaySelection.Right)
-                    self.view.fxns.updatePanel(DisplaySelection.Right, rightFrame)
+                    self.view.fxns.updatePanel(VideoSelection.Left, frame, text)
+
+                    rightFrame, altText = self.model.getFeed(DisplaySelection.Right)
+                    self.view.fxns.updatePanel(VideoSelection.Right, rightFrame, altText)
 
                 #self.root.update_idletasks()
                 #self.root.update()
 
-                sensorToReadingMap = self.model.getReading()
-                closestValue = None
-                closestCamera = None
-                for key, value in sensorToReadingMap:
-                    if closestValue is None:
-                        closestValue = value
-                    elif value is not None:
-                        if closestValue > value:
-                            closestValue = value
+                #TODO: Re-integrate sensors
+                # sensorToReadingMap = self.model.getReading()
+                # closestValue = None
+                # closestCamera = None
+                # for key, value in sensorToReadingMap:
+                #     if closestValue is None:
+                #         closestValue = value
+                #     elif value is not None:
+                #         if closestValue > value:
+                #             closestValue = value
 
         #self.root.quit()
 
@@ -106,7 +107,11 @@ class Controller:
             self.view.fxns.makeFullScreen()
 
 
+controller = None #TODO: Does this solve descoping issues?
 def main():
+
+    view = View()
+
     leftCam = cv2.VideoCapture(0)
     rightCam = cv2.VideoCapture(1)
     rearCam = cv2.VideoCapture(2)
@@ -117,14 +122,17 @@ def main():
                         GPIO.ECHO: 18
                     }
     }
-    controller = Controller(leftCam, rightCam, rearCam, sensorVals)
-    controller.run()
+    controller = Controller(view, leftCam, rightCam, rearCam, sensorVals)
+    controller_thread = threading.Thread(target=lambda: controller.run())
+    controller_thread.start()
 
+    view.run()
+
+    #TODO: coordinate camera releases
     leftCam.release()
     rightCam.release()
     rearCam.release()
     cv2.destroyAllWindows()
-
 
 if __name__ == "__main__":
     main()

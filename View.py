@@ -9,43 +9,63 @@ from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.properties import ObjectProperty
 
 from Util import OnScreenButtons
-from Util import DisplaySelection
+from Util import DisplaySelection, VideoSelection
+
+import threading
 
 #IMAGES
 from kivy.uix.image import Image
 from kivy.clock import Clock
 from kivy.graphics.texture import Texture
-
 #TODO:
 import cv2
 
-
+VIEW_ROOT = None
 
 class VideoFeed(Image):
     def __init__(self, **kwargs):
         super(VideoFeed, self).__init__(**kwargs)
+        self.next_frame = None
+        self.next_text = None
+        self.feed_lock = threading.Lock()
+        Clock.schedule_interval(self.process_update, 1.0 / 15) #TODO: fps
 
-    def update_feed(self, frame):
-        if(not frame):
+    def process_update(self, dt):
+
+        #LOCKED
+        self.feed_lock.acquire()
+        if self.next_frame is None:
+            self.feed_lock.release()
             return
-        # convert it to texture
-        buf1 = cv2.flip(frame, 0)
+        buf1 = cv2.flip(self.next_frame, 0)
+
+        next_frame_shape = self.next_frame.shape
+        self.video_label.text = self.next_text
+        self.feed_lock.release()
+        #UNLOCKED
+
         buf = buf1.tostring()
+
         image_texture = Texture.create(
-            size=(frame.shape[1], frame.shape[0]), colorfmt='bgr')
+            size=(next_frame_shape[1], next_frame_shape[0]), colorfmt='bgr')
         image_texture.blit_buffer(buf, colorfmt='bgr', bufferfmt='ubyte')
-        # display image from the texture
+
         self.texture = image_texture
+
+    def update_feed(self, frame, text):
+        self.feed_lock.acquire()
+        self.next_frame = frame
+        self.next_text = text
+        self.feed_lock.release()
+        return
 
 class Toolbar (BoxLayout):
 
-    def click_switch_screen(self, instance, value):
-        if value:
-            self.manager.transition.direction = "left"
-            self.manager.current = "SPLITSCREEN"
-        else:
-            self.manager.transition.direction = "right"
-            self.manager.current = "FULLSCREEN"
+    def click_toggle_screen(self):
+        VIEW_ROOT.registerButtonPress("onToggleScreen")
+
+    def click_recalibrate(self):
+        VIEW_ROOT.registerButtonPress("onRecalibrate")
 
 
 
@@ -55,26 +75,31 @@ class WindowWrapper(BoxLayout):
         #TODO: Map buttons to appropriate functions
 
         self.panelMap = {
-            DisplaySelection.MainLeft: self.primary_full,
-            DisplaySelection.Right: self.primary_split,
-            DisplaySelection.Left: self.secondary_split
+            VideoSelection.Main: self.primary_full,
+            VideoSelection.Left: self.primary_split,
+            VideoSelection.Right: self.secondary_split
         }
 
+        self._buttonMap = buttonMap
+
         pass
+
+    def registerButtonPress(self, eventName):
+        self._buttonMap[eventName]()
 
     def makeFullScreen(self):
-        pass
+        self.manager.transition.direction = "right"
+        self.manager.current = "FULLSCREEN"
 
     def makeSplitScreen(self):
-        pass
+        self.manager.transition.direction = "left"
+        self.manager.current = "SPLITSCREEN"
 
     def toggleNotifications(self):
         pass
 
-    def updatePanel(self, displaySelection, image):
-
-        #TODO: Labels
-        self.panelMap[displaySelection].video.update_feed(image)
+    def updatePanel(self, videoSelection, image, text):
+        self.panelMap[videoSelection].video.update_feed(image, text)
 
     def on_stop(self):
         #TODO: Callback
@@ -82,14 +107,21 @@ class WindowWrapper(BoxLayout):
 
 class viewApp(App):
 
-    def __init__(self, buttonMap, **kwargs):
+    def __init__(self, **kwargs):
         super(viewApp, self).__init__(**kwargs)
-        self._buttonMap = buttonMap
         self.fxns = None
+        self._buttonMap = None
+
+    def initialize(self, buttonMap):
+        self._buttonMap = buttonMap
 
     def build(self):
+        global VIEW_ROOT
         self.fxns = WindowWrapper(self._buttonMap)
+        VIEW_ROOT = self.fxns
         return self.fxns
+
+
 
 #
 #           MISC. KIVY CLASSES
@@ -105,7 +137,20 @@ class SplitScreenWindow(Screen):
     pass
 
 class CamView(BoxLayout):
-    pass
+
+    def onClickPrev(self, dType):
+        if(dType == DisplaySelection.MainLeft):
+            VIEW_ROOT.registerButtonPress("onPrimaryPrev")
+        else:
+            VIEW_ROOT.registerButtonPress("onSecondaryPrev")
+
+    def onClickNext(self, dType):
+        if (dType == DisplaySelection.MainLeft):
+            VIEW_ROOT.registerButtonPress("onPrimaryNext")
+        else:
+            VIEW_ROOT.registerButtonPress("onSecondaryNext")
+
+
 
 
 # import tkinter as tki

@@ -7,6 +7,7 @@ from image_stitching import Stitcher
 from sensor import Sensor
 from threading import Thread
 
+import os #TODO:
 
 class FeedSelections(Enum):
     Overhead = 0
@@ -21,22 +22,14 @@ feedToCamMap = {
                 FeedSelections.Rear: CamList.Rear
                 }
 
+feedToTitleMap = {
+                FeedSelections.Overhead: "Panorama",
+                FeedSelections.Left: "Left Camera",
+                FeedSelections.Right: "Right Camera",
+                FeedSelections.Rear: "Rear Camera"
+}
+
 feedListVals = [feedList for feedList in FeedSelections]
-
-#TODO:
-# feedToDefaultMap = {
-#                     FeedSelections.Overhead: Image.open('defaultImages/overheadDefault.png').resize((400, 300)),
-#                     FeedSelections.Left: Image.open('defaultImages/leftDefault.png').resize((400, 300)),
-#                     FeedSelections.Right: Image.open('defaultImages/rightDefault.png').resize((400, 300)),
-#                     FeedSelections.Rear: Image.open('defaultImages/rearDefault.png').resize((400, 300))
-#                     }
-
-feedToDefaultMap = {
-                    FeedSelections.Overhead: cv2.imread('defaultImages/overheadDefault.png').resize((400, 300)),
-                    FeedSelections.Left: cv2.imread('defaultImages/leftDefault.png').resize((400, 300)),
-                    FeedSelections.Right: cv2.imread('defaultImages/rightDefault.png').resize((400, 300)),
-                    FeedSelections.Rear: cv2.imread('defaultImages/rearDefault.png').resize((400, 300))
-                    }
 
 class Model:
     def __init__(self, leftCapture, rightCapture, rearCapture, sensorVals):
@@ -45,14 +38,32 @@ class Model:
                                 DisplaySelection.Right: FeedSelections.Overhead
                                 }
 
+        prefix = os.path.join(os.getcwd(), 'defaultImages')
+
+        over = cv2.imread(os.path.join(prefix, 'overheadDefault.png'))
+        left = cv2.imread(os.path.join(prefix, 'leftDefault.png'))
+        right = cv2.imread(os.path.join(prefix, 'rightDefault.png'))
+        rear = cv2.imread(os.path.join(prefix, 'rearDefault.png'))
+
+        self.feedToDefaultMap = {
+            FeedSelections.Overhead: over,
+            FeedSelections.Left: left,
+            FeedSelections.Right: right,
+            FeedSelections.Rear: rear
+        }
+
+        #.resize(400,300) #TODO: Resize
+
+
         self.stitcher = Stitcher()
 
+        #TODO: Re-enable sensor code
         #Create the left sensor
-        self.leftSensor = Sensor(sensorVals[CamList.Left][GPIO.TRIG], sensorVals[CamList.Left][GPIO.ECHO])
-
-        #Run a thread to start the readings
-        t = Thread(target = self.leftSensor.startSensors)
-        t.start()
+        # self.leftSensor = Sensor(sensorVals[CamList.Left][GPIO.TRIG], sensorVals[CamList.Left][GPIO.ECHO])
+        #
+        # #Run a thread to start the readings
+        # t = Thread(target = self.leftSensor.startSensors)
+        # t.start()
 
         self.notificationsMuted = False
         self.leftCapture = leftCapture
@@ -81,54 +92,45 @@ class Model:
 
         if feedSelection == FeedSelections.Overhead:
             # Pull from all feeds and stitch them together
-<<<<<<< HEAD
-            leftFeed = self.getWebcamFrame(self.leftCapture)
-            rightFeed = self.getWebcamFrame(self.rightCapture)
-            rearFeed = self.getWebcamFrame(self.rearCapture)
 
-            if leftFeed is None or rightFeed is None or rearFeed is None:
-                return feedToDefaultMap[feedSelection] #TODO: ImageTk.PhotoImage(feedToDefaultMap[feedSelection])
-
-            stitchedArray = self.stitcher.stitch([leftFeed, rightFeed, rearFeed])
-            stitchedImage = stitchedArray #TODO: ImageTk.PhotoImage(Image.fromarray(stitchedArray))
-            return stitchedImage
-=======
             try:
                 leftFeed = self.getWebcamFrame(self.leftCapture)
                 rightFeed = self.getWebcamFrame(self.rightCapture)
                 rearFeed = self.getWebcamFrame(self.rearCapture)
 
                 if leftFeed is None or rightFeed is None or rearFeed is None:
-                    return ImageTk.PhotoImage(feedToDefaultMap[feedSelection])
+                    return self.feedToDefaultMap[feedSelection], feedToTitleMap[feedSelection]
 
                 stitchedArray = self.stitcher.stitch([leftFeed, rightFeed, rearFeed])
-                stitchedImage = ImageTk.PhotoImage(Image.fromarray(stitchedArray))
-                return stitchedImage
+                stitchedImage = stitchedArray #TODO: ImageTk.PhotoImage(Image.fromarray(stitchedArray))
+                return stitchedImage, feedToTitleMap[feedSelection]
             except RuntimeError:
-                return ImageTk.PhotoImage(feedToDefaultMap[feedSelection])
->>>>>>> 9679d3013fdbbc840e71d10f8b4860d12d9c0aff
+                return self.feedToDefaultMap[feedSelection], feedToTitleMap[feedSelection]
+
         elif feedSelection == FeedSelections.Left:
             leftFeed = self.getWebcamFrame(self.leftCapture)
             if leftFeed is None:
-                return feedToDefaultMap[feedSelection] #TODO: ImageTk.PhotoImage(feedToDefaultMap[feedSelection])
+                return self.feedToDefaultMap[feedSelection], feedToTitleMap[feedSelection]
 
-            return leftFeed #TODO: ImageTk.PhotoImage(Image.fromarray(leftFeed))
+            return leftFeed, feedToTitleMap[feedSelection] #TODO: ImageTk.PhotoImage(Image.fromarray(leftFeed))
         elif feedSelection == FeedSelections.Right:
             rightFeed = self.getWebcamFrame(self.rightCapture)
             if rightFeed is None:
-                return feedToDefaultMap[feedSelection] #TODO: ImageTk.PhotoImage(feedToDefaultMap[feedSelection])
+                return self.feedToDefaultMap[feedSelection], feedToTitleMap[feedSelection]
 
-            return rightFeed #TODO: ImageTk.PhotoImage(Image.fromarray(rightFeed))
+            return rightFeed, feedToTitleMap[feedSelection] #TODO: ImageTk.PhotoImage(Image.fromarray(rightFeed))
         elif feedSelection == FeedSelections.Rear:
             rearFeed = self.getWebcamFrame(self.rearCapture)
             if rearFeed is None:
-                return feedToDefaultMap[feedSelection] #TODO: ImageTk.PhotoImage(feedToDefaultMap[feedSelection])
+                return self.feedToDefaultMap[feedSelection], feedToTitleMap[feedSelection]
 
-            return rearFeed #TODO: ImageTk.PhotoImage(Image.fromarray(rearFeed))
+            return rearFeed, feedToTitleMap[feedSelection] #TODO: ImageTk.PhotoImage(Image.fromarray(rearFeed))
 
 
     def recalibrate(self):
-        self.stitcher.calibrate()
+        #TODO: turn recalibration back on
+        #self.stitcher.calibrate()
+        print("Trigger Recalibration")
 
 
     def getReading(self):
