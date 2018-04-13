@@ -9,7 +9,7 @@ from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.properties import ObjectProperty
 
 from Util import OnScreenButtons
-from Util import DisplaySelection, VideoSelection
+from Util import DisplaySelection, VideoSelection, CamList
 
 import threading
 
@@ -17,10 +17,32 @@ import threading
 from kivy.uix.image import Image
 from kivy.clock import Clock
 from kivy.graphics.texture import Texture
+from kivy.uix.popup import Popup
+
 #TODO:
 import cv2
 
 VIEW_ROOT = None
+
+
+class DistanceNotification(Popup):
+    def __init__(self, camType, distance, label, **kwargs):
+        super(DistanceNotification, self).__init__(**kwargs)
+
+        self.distance_lock = threading.Lock()
+
+        self.camText.text = "Object detected by " + label + "-facing camera"
+
+        self.prefix = "Distance: "
+        self.camType = camType
+        self.update_distance(distance)
+
+    def update_distance(self, distance):
+        self.distance_lock.acquire()
+        self.distance = distance
+        self.distText.text = self.prefix + str(distance) + "m"
+        self.distance_lock.release()
+
 
 class VideoFeed(Image):
     def __init__(self, **kwargs):
@@ -80,6 +102,7 @@ class WindowWrapper(BoxLayout):
         }
 
         self._buttonMap = buttonMap
+        self.popup = None
 
         pass
 
@@ -100,6 +123,18 @@ class WindowWrapper(BoxLayout):
 
     def updatePanel(self, videoSelection, image, text):
         self.panelMap[videoSelection].video.update_feed(image, text)
+
+    def sendDistanceNotification(self, camType, distance, feedTitle):
+
+        if(camType != self.popup.camType):
+            return
+
+        if self.popup is None:
+            self.popup = DistanceNotification(camType, distance, feedTitle)
+            self.popup.open()
+        else:
+            self.popup.update_distance(distance)
+
 
     def on_stop(self):
         #TODO: Callback for cleanup

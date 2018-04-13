@@ -1,10 +1,14 @@
 from enum import Enum
 
 
+class VideoSelection(Enum):
+    Main = 0
+    Left = 1
+    Right = 2
+
 class DisplaySelection(Enum):
     MainLeft = 0
     Right = 1
-    Left = 2
 
 
 class OnScreenButtons(Enum):

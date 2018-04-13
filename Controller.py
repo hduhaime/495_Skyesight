@@ -7,6 +7,9 @@ from Model import GPIO
 from Util import *
 import threading
 
+#TODO
+from random import *
+
 
 class Controller:
     def __init__(self, view, leftCapture, rightCapture, rearCapture, sensorVals):
@@ -63,6 +66,10 @@ class Controller:
                 #     elif value is not None:
                 #         if closestValue > value:
                 #             closestValue = value
+
+                #TODO: to send distance notifications, use view.fxns.sendDistanceNotification(viewType, distance, feedName)
+                #   If you call this when a notification is open, it'll update the values instead of reopening
+                self.view.fxns.sendDistanceNotification(CamList.Left, 0.52 + random(), "left")
 
         #self.root.quit()
 

@@ -28,6 +28,39 @@
     SplitScreenWindow:
         id: split
 
+<DistanceNotification>:
+    size_hint: .5, .5
+    auto_dismiss: False
+    title: "Proximity Warning"
+
+    camText: camera_label
+    distText: distance_label
+
+    BoxLayout:
+        orientation: "vertical"
+        spacing: 10
+        padding: 10
+
+        Label:
+            id: camera_label
+            text:""
+
+        Label:
+            id: distance_label
+            text: "Distance: 0.78m"
+
+        BoxLayout:
+            orientation: "horizontal"
+
+            Button:
+                text: "Switch to feed"
+                on_press: root.dismiss()
+
+            Button:
+                text: "Close"
+                on_press: root.dismiss()
+
+
 <Toolbar>:
     orientation: "horizontal"
     size_hint_y: None
