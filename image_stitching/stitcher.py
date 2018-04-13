@@ -19,6 +19,9 @@ class Stitcher:
         #Canny
         #output.append(cv2.Canny(images, 100, 200)
         #Normalization
+        if img is None:
+            raise RuntimeError("cannot calibrate because all feeds not available")
+
         gray = cv2.cvtColor(img, cv2.COLOR_BGRA2GRAY)
         eq = cv2.equalizeHist(gray)
 
@@ -32,22 +35,19 @@ class Stitcher:
         (kpR, ftR) = self.describe(self.imageR)
 
         if np.any([kpL, kpM, kpR, ftL, ftM, ftR] is None):
-            print("ERROR: Unable to find key points or features between images.")
-            return
+            raise RuntimeError("ERROR: Unable to find key points or features between images.")
 
         ptsA = self.match(kpL, kpM, ftL, ftM, self.ratio)
         ptsB = self.match(kpR, kpM, ftR, ftM, self.ratio)
 
         if np.any(ptsA is None) or np.any(ptsB is None):
-            print("ERROR: Unable to match points between images")
-            return
+            raise RuntimeError("ERROR: Unable to match points between images")
 
         (H1, status) = self.get_homography(ptsA[0], ptsA[1], self.shift[0], 0, self.reprojThresh)
         (H2, status) = self.get_homography(ptsB[0], ptsB[1], 0, 0, self.reprojThresh)
 
         if H2 is None or H1 is None:
-            print("ERROR: Unable to find homography matrix for one or more images.")
-            return
+            raise RuntimeError("ERROR: Unable to find homography matrix for one or more images.")
 
         self.hmatM = np.eye(3)
         self.hmatM[0][-1] = self.shift[0]

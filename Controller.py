@@ -29,8 +29,7 @@ class Controller:
             "onPrimaryNext": lambda: self.pressNext(DisplaySelection.MainLeft),
             "onSecondaryPrev": lambda: self.pressPrev(DisplaySelection.Right),
             "onSecondaryNext": lambda: self.pressNext(DisplaySelection.Right),
-            "onChangeMaxDistance": None #TODO:
-
+            "onChangeMaxDistance": self.changeDistanceThreshold
         }
 
         view.initialize(buttonMap)
@@ -53,7 +52,7 @@ class Controller:
                     rightFrame, altText = self.model.getFeed(DisplaySelection.Right)
                     self.view.fxns.updatePanel(VideoSelection.Right, rightFrame, altText)
 
-                sensorToReadingMap = self.model.getReading()
+                sensorToReadingMap = {} #TODO: self.model.getReading()
                 for key, value in sensorToReadingMap:
                     # make sensor valid again if we go out of threshold
                     if value >= self.distanceThreshold and not self.sensorToIsValidMap[key]:
@@ -115,7 +114,10 @@ def main():
 
     view.run()
 
-    #TODO: coordinate camera releases (still leftover thread)
+    # wait for controller run thread to end
+    controller.onClose()
+    controller_thread.join()
+
     leftCam.release()
     rightCam.release()
     rearCam.release()

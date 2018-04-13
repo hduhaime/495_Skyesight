@@ -135,11 +135,6 @@ class WindowWrapper(BoxLayout):
         else:
             self.popup.update_distance(distance)
 
-
-    def on_stop(self):
-        #TODO: Callback for cleanup
-        pass
-
 class viewApp(App):
 
     def __init__(self, **kwargs):

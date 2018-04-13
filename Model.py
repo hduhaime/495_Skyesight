@@ -90,12 +90,6 @@ class Model:
 
         if feedSelection == FeedSelections.Overhead:
             # Pull from all feeds and stitch them together
-
-
-            #TODO:
-            return self.feedToDefaultMap[feedSelection], feedToTitleMap[feedSelection]
-
-
             try:
                 leftFeed = self.getWebcamFrame(self.leftCapture)
                 rightFeed = self.getWebcamFrame(self.rightCapture)
@@ -131,9 +125,10 @@ class Model:
 
 
     def recalibrate(self):
-        #TODO: turn recalibration back on
-        pass
-        #self.stitcher.calibrate()
+        try:
+            self.stitcher.calibrate()
+        except RuntimeError:
+            return
 
 
     def getReading(self):
