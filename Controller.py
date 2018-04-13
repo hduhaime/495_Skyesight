@@ -17,27 +17,6 @@ class Controller:
 
         self.view = view
 
-        # initialize tkinter components and View
-        # self.root = tki.Tk()
-        # set a callback to handle when the window is closed
-        # self.root.wm_title("Skyesight")
-        # self.root.wm_protocol("WM_DELETE_WINDOW", self.onClose)
-
-        # buttonMap = {OnScreenButtons.FullSplitscreenToggle: tki.Button(self.root, text="Make Splitscreen",
-        #                                                     command=self.toggleScreen),
-        #              OnScreenButtons.Recalibrate: tki.Button(self.root, text="Recalibrate",
-        #                                             command=self.model.recalibrate),
-        #              OnScreenButtons.ToggleNotifications: tki.Button(self.root, text="Mute Notifications",
-        #                                                     command=self.toggleNotifications),
-        #              OnScreenButtons.MainLeftPrevFeed: tki.Button(self.root, text="Prev Feed",
-        #                                                 command=lambda: self.pressPrev(DisplaySelection.MainLeft)),
-        #              OnScreenButtons.MainLeftNextFeed: tki.Button(self.root, text="Next Feed",
-        #                                                 command=lambda: self.pressNext(DisplaySelection.MainLeft)),
-        #              OnScreenButtons.RightPrevFeed: tki.Button(self.root, text="Prev Feed",
-        #                                             command=lambda: self.pressPrev(DisplaySelection.Right)),
-        #              OnScreenButtons.RightNextFeed: tki.Button(self.root, text="Next Feed",
-        #                                             command=lambda: self.pressNext(DisplaySelection.Right))}
-
         buttonMap = {
             "onToggleScreen": self.toggleScreen,
             "onRecalibrate": self.model.recalibrate,
@@ -74,7 +53,7 @@ class Controller:
                 #self.root.update_idletasks()
                 #self.root.update()
 
-                #TODO: Re-integrate sensors
+                #TODO: re-integrate sensors
                 # sensorToReadingMap = self.model.getReading()
                 # closestValue = None
                 # closestCamera = None
@@ -107,13 +86,13 @@ class Controller:
             self.view.fxns.makeFullScreen()
 
 
-controller = None #TODO: Does this solve descoping issues?
+controller = None #TODO: ensure this doesn't cause controller_thread to go out of scope
 def main():
 
     view = View()
 
     leftCam = cv2.VideoCapture(0)
-    rightCam = cv2.VideoCapture(1)
+    rightCam = cv2.VideoCapture(3)
     rearCam = cv2.VideoCapture(2)
 
     sensorVals = {
@@ -128,7 +107,7 @@ def main():
 
     view.run()
 
-    #TODO: coordinate camera releases
+    #TODO: coordinate camera releases (still leftover thread)
     leftCam.release()
     rightCam.release()
     rearCam.release()
