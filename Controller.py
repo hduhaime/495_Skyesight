@@ -17,7 +17,8 @@ class Controller:
         self.notificationsMuted = False
         self.isFullScreen = True
         self.continueRunning = True
-
+        self.sensorToIsValidMap = {CamList.Left: True, CamList.Right: True, CamList.Rear: True}
+        self.distanceThreshold = 1.5 #TODO: change this to a global default value
         self.view = view
 
         buttonMap = {
@@ -39,12 +40,11 @@ class Controller:
 
     def run(self):
         while self.continueRunning:
-            if(self.view.fxns):
+            if self.view.fxns:
 
                 frame, text = self.model.getFeed(DisplaySelection.MainLeft)
 
                 if self.isFullScreen:
-
                     self.view.fxns.updatePanel(VideoSelection.Main, frame, text)
 
                 if not self.isFullScreen:
@@ -53,25 +53,16 @@ class Controller:
                     rightFrame, altText = self.model.getFeed(DisplaySelection.Right)
                     self.view.fxns.updatePanel(VideoSelection.Right, rightFrame, altText)
 
-                #self.root.update_idletasks()
-                #self.root.update()
+                sensorToReadingMap = self.model.getReading()
+                for key, value in sensorToReadingMap:
+                    # make sensor valid again if we go out of threshold
+                    if value >= self.distanceThreshold and not self.sensorToIsValidMap[key]:
+                        self.sensorToIsValidMap[key] = True
 
-                #TODO: re-integrate sensors
-                # sensorToReadingMap = self.model.getReading()
-                # closestValue = None
-                # closestCamera = None
-                # for key, value in sensorToReadingMap:
-                #     if closestValue is None:
-                #         closestValue = value
-                #     elif value is not None:
-                #         if closestValue > value:
-                #             closestValue = value
-
-                #TODO: to send distance notifications, use view.fxns.sendDistanceNotification(viewType, distance, feedName)
-                #   If you call this when a notification is open, it'll update the values instead of reopening
-                self.view.fxns.sendDistanceNotification(CamList.Left, 0.52 + random(), "left")
-
-        #self.root.quit()
+                    # send distance notification to view if sensor is valid and in threshold
+                    if self.sensorToIsValidMap[key] and self.distanceThreshold <= value:
+                        self.view.fxns.sendDistanceNotification(key, value, camToNameMap[key])
+                        #TODO: do we want a queue with the closest distance at the highest priority?
 
     def pressNext(self, displaySelection):
         self.model.nextFeed(displaySelection)
@@ -79,10 +70,19 @@ class Controller:
     def pressPrev(self, displaySelection):
         self.model.prevFeed(displaySelection)
 
+    def changeFeed(self, displaySelection, desiredFeedSelection):
+        self.model.changeFeed(displaySelection, desiredFeedSelection)
+
+    def changeDistanceThreshold(self, distance):
+        self.distanceThreshold = distance
+
     def toggleNotifications(self):
         self.notificationsMuted = not self.notificationsMuted
         self.model.toggleNotifications(self.notificationsMuted)
         self.view.fxns.toggleNotifications(self.notificationsMuted)
+
+    def acknowledgeDistNotification(self, camSelection):
+        self.sensorToIsValidMap[camSelection] = False
 
     def toggleScreen(self):
         if self.isFullScreen:
@@ -91,6 +91,7 @@ class Controller:
         else:
             self.isFullScreen = True
             self.view.fxns.makeFullScreen()
+
 
 
 controller = None #TODO: ensure this doesn't cause controller_thread to go out of scope

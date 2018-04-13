@@ -1,6 +1,5 @@
 from enum import Enum
 
-
 class VideoSelection(Enum):
     Main = 0
     Left = 1
@@ -24,6 +23,8 @@ class CamList(Enum):
     Left = 0
     Right = 1
     Rear = 2
+
+camToNameMap = {CamList.Left: "left", CamList.Right: "right", CamList.Rear: "rear"}
 
 class GPIO(Enum):
     TRIG = 0
