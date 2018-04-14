@@ -68,8 +68,16 @@ class Model:
         self.rightCapture = rightCapture
         self.rearCapture = rearCapture
 
-    def changeFeed(self, displaySelection, desiredFeedSelection):
-        self.displayToFeedMap[displaySelection] = desiredFeedSelection
+    def changeFeed(self, displaySelection, desiredCamSelection):
+
+        if desiredCamSelection == CamList.Left:
+            feedSelection = FeedSelections.Left
+        elif desiredCamSelection == CamList.Rear:
+            feedSelection = FeedSelections.Rear
+        else:
+            feedSelection = FeedSelections.Right
+
+        self.displayToFeedMap[displaySelection] = feedSelection
 
     def nextFeed(self, displaySelection):
         curSelection = self.displayToFeedMap[displaySelection]
@@ -98,7 +106,7 @@ class Model:
                 if leftFeed is None or rightFeed is None or rearFeed is None:
                     return self.feedToDefaultMap[feedSelection], feedToTitleMap[feedSelection]
 
-                stitchedArray = self.stitcher.stitch([leftFeed, rightFeed, rearFeed])
+                stitchedArray = self.stitcher.stitch([leftFeed, rearFeed, rightFeed])
                 stitchedImage = stitchedArray
                 return stitchedImage, feedToTitleMap[feedSelection]
             except RuntimeError:
@@ -133,6 +141,9 @@ class Model:
 
     def getReading(self):
 
+        if self.notificationsMuted:
+            return {}
+
         readings = {
             CamList.Left: self.leftSensor.getReading()
         }
@@ -161,7 +172,7 @@ class Model:
         if not ret:
             return None
 
-        frame_to_display = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        frame_to_display = frame#cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         if frame_to_display.shape[0] != 480:
             frame_to_display = cv2.resize(frame_to_display, None, fx=0.444444, fy=0.444444)[:, 106:746, :]
 

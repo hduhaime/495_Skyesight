@@ -54,11 +54,11 @@
 
             Button:
                 text: "Switch to feed"
-                on_press: root.dismiss()
+                on_press: root.click_goto_feed()
 
             Button:
                 text: "Close"
-                on_press: root.dismiss()
+                on_press: root.click_dismiss()
 
 
 <Toolbar>:
@@ -82,24 +82,31 @@
 
 
         BoxLayout:
-            size_hint_x: .3
 
             orientation: "horizontal"
-            Label:
-                text: "Dual View: "
-            Switch:
-                id: switch_id
-                on_active: root.click_toggle_screen()
+
+            BoxLayout:
+                orientation: "horizontal"
+
+                Label:
+                    text: "Dual View: "
+                Switch:
+                    id: switch_id
+                    on_active: root.click_toggle_screen()
+
+                Label:
+                    text: "Notifications: "
+
+                Switch:
+                    on_active: root.click_toggle_notifications()
 
 
 
         Button:
-            size_hint_x: .3
             text: "Recalibrate"
             on_press: root.click_recalibrate()
 
         BoxLayout:
-            size_hint_x: .3
 
             orientation: "vertical"
 
@@ -117,6 +124,7 @@
                 max: 3
                 value: 1.5
                 step: 0.1
+                on_touch_up: root.on_slider_value_change(distance_slider.value)
 
 <CamView>:
     orientation: "vertical"

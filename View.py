@@ -30,6 +30,7 @@ class DistanceNotification(Popup):
         super(DistanceNotification, self).__init__(**kwargs)
 
         self.distance_lock = threading.Lock()
+        self.popup_lock = threading.Lock()
 
         self.camText.text = "Object detected by " + label + "-facing camera"
 
@@ -42,6 +43,26 @@ class DistanceNotification(Popup):
         self.distance = distance
         self.distText.text = self.prefix + str(distance) + "m"
         self.distance_lock.release()
+
+    def click_dismiss(self):
+
+        self.popup_lock.acquire()
+        VIEW_ROOT.popup = None
+        self.dismiss()
+        self.popup_lock.release()
+
+        VIEW_ROOT.registerButtonPressArgument("onDismissNotification", self.camType)
+        pass
+
+    def click_goto_feed(self):
+
+        self.popup_lock.acquire()
+        VIEW_ROOT.popup = None
+        self.dismiss()
+        self.popup_lock.release()
+
+        VIEW_ROOT.registerButtonPressArgument("onGotoNotification", self.camType)
+        pass
 
 
 class VideoFeed(Image):
@@ -82,6 +103,10 @@ class VideoFeed(Image):
         return
 
 class Toolbar (BoxLayout):
+    def __init__(self, **kwargs):
+        super(Toolbar, self).__init__(**kwargs)
+        self.oldvalue = 1.5
+
 
     def click_toggle_screen(self):
         VIEW_ROOT.registerButtonPress("onToggleScreen")
@@ -89,10 +114,20 @@ class Toolbar (BoxLayout):
     def click_recalibrate(self):
         VIEW_ROOT.registerButtonPress("onRecalibrate")
 
+    def click_toggle_notifications(self):
+        VIEW_ROOT.registerButtonPress("onToggleNotifications")
+
+    def on_slider_value_change(self, value):
+        if self.oldvalue != value:
+            self.oldvalue = value
+
+            VIEW_ROOT.registerButtonPressArgument("onChangeDistanceRange", value)
+
+
 
 
 class WindowWrapper(BoxLayout):
-    def __init__(self, buttonMap, **kwargs):
+    def __init__(self, buttonMap, buttonMapArgs, **kwargs):
         super(WindowWrapper, self).__init__(**kwargs)
 
         self.panelMap = {
@@ -102,12 +137,15 @@ class WindowWrapper(BoxLayout):
         }
 
         self._buttonMap = buttonMap
+        self._buttonMapArgs = buttonMapArgs
         self.popup = None
 
-        pass
 
     def registerButtonPress(self, eventName):
         self._buttonMap[eventName]()
+
+    def registerButtonPressArgument(self, eventName, argument):
+        self._buttonMapArgs[eventName](argument)
 
     def makeFullScreen(self):
         self.manager.transition.direction = "right"
@@ -117,7 +155,7 @@ class WindowWrapper(BoxLayout):
         self.manager.transition.direction = "left"
         self.manager.current = "SPLITSCREEN"
 
-    def toggleNotifications(self):
+    def toggleNotifications(self, muted):
         #TODO:
         pass
 
@@ -126,14 +164,19 @@ class WindowWrapper(BoxLayout):
 
     def sendDistanceNotification(self, camType, distance, feedTitle):
 
-        if(camType != self.popup.camType):
-            return
-
         if self.popup is None:
             self.popup = DistanceNotification(camType, distance, feedTitle)
+            self.popup.popup_lock.acquire()
             self.popup.open()
+            self.popup.popup_lock.release()
         else:
-            self.popup.update_distance(distance)
+            self.popup.popup_lock.acquire()
+            if (camType == self.popup.camType):
+                self.popup.update_distance(distance)
+            self.popup.popup_lock.release()
+
+        # print(str(self.popup.isOpen) + " " + feedTitle)
+
 
 class viewApp(App):
 
@@ -142,12 +185,13 @@ class viewApp(App):
         self.fxns = None
         self._buttonMap = None
 
-    def initialize(self, buttonMap):
+    def initialize(self, buttonMap, buttonMapArgs):
         self._buttonMap = buttonMap
+        self._buttonMapArgs = buttonMapArgs
 
     def build(self):
         global VIEW_ROOT
-        self.fxns = WindowWrapper(self._buttonMap)
+        self.fxns = WindowWrapper(self._buttonMap, self._buttonMapArgs)
         VIEW_ROOT = self.fxns
         return self.fxns
 

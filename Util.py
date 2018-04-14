@@ -9,7 +9,6 @@ class DisplaySelection(Enum):
     MainLeft = 0
     Right = 1
 
-
 class OnScreenButtons(Enum):
     FullSplitscreenToggle = 0
     Recalibrate = 1
