@@ -1,0 +1,198 @@
+#: import SlideTransition kivy.uix.screenmanager.SlideTransition
+#: import TYPES Util
+#: import utils kivy.utils
+
+<WindowWrapper>:
+    orientation: "vertical"
+    manager: screen_manager
+
+    primary_full: screen_manager.fs.primary
+    primary_split:  screen_manager.ss.primary
+    secondary_split:    screen_manager.ss.secondary
+
+
+    Toolbar:
+
+    ScreenManagement:
+        id: screen_manager
+
+<ScreenManagement>:
+
+    fs: full
+    ss: split
+    transition: SlideTransition()
+
+
+    FullScreenWindow:
+        id: full
+    SplitScreenWindow:
+        id: split
+
+<DistanceNotification>:
+    size_hint: .5, .5
+    auto_dismiss: False
+    title: "Proximity Warning"
+
+    camText: camera_label
+    distText: distance_label
+
+    BoxLayout:
+        orientation: "vertical"
+        spacing: 10
+        padding: 10
+
+        Label:
+            id: camera_label
+            text:""
+
+        Label:
+            id: distance_label
+            text: "Distance: 0.78m"
+
+        BoxLayout:
+            orientation: "horizontal"
+
+            Button:
+                text: "Switch to feed"
+                on_press: root.dismiss()
+
+            Button:
+                text: "Close"
+                on_press: root.dismiss()
+
+
+<Toolbar>:
+    orientation: "horizontal"
+    size_hint_y: None
+    height: 75
+
+    canvas:
+        Color:
+            rgba: utils.get_color_from_hex('#0085b3')
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+
+    BoxLayout:
+        pos_hint: {"center_x": .5, "center_y": .5}
+        orientation: "horizontal"
+        padding: 10
+        spacing: 10
+
+
+        BoxLayout:
+            size_hint_x: .3
+
+            orientation: "horizontal"
+            Label:
+                text: "Dual View: "
+            Switch:
+                id: switch_id
+                on_active: root.click_toggle_screen()
+
+
+
+        Button:
+            size_hint_x: .3
+            text: "Recalibrate"
+            on_press: root.click_recalibrate()
+
+        BoxLayout:
+            size_hint_x: .3
+
+            orientation: "vertical"
+
+            BoxLayout:
+                orientation: "horizontal"
+
+                Label:
+                    text: "Sensor range: "
+                Label:
+                    text: '%.1f' % distance_slider.value + "m"
+
+            Slider:
+                id: distance_slider
+                min: 0.1
+                max: 3
+                value: 1.5
+                step: 0.1
+
+<CamView>:
+    orientation: "vertical"
+    padding: 10
+    spacing: 10
+    video: video_obj
+
+    VideoFeed:
+        padding: 10
+        id: video_obj
+        video_label: label_obj
+
+
+
+    BoxLayout:
+        pos_hint: {"center_x": .5, "center_y": .5}
+        size_hint_y: .15
+        size_hint_x: .8
+        center: self.parent.center
+        orientation: "horizontal"
+        padding: 10
+        spacing: 10
+
+        canvas.before:
+            Color:
+                rgba: utils.get_color_from_hex('#2f2f2f')
+            Rectangle:
+                pos: self.pos
+                size: self.size
+
+
+        Button:
+            size_hint_x: 0.7
+            text: "<"
+            on_press: root.onClickPrev(root.viewType)
+            font_size: self.height - dp(24)
+
+        Label:
+
+
+            text: ""
+            id: label_obj
+            valign: 'middle'
+            font_size: 18
+
+
+        Button:
+            text: ">"
+            size_hint_x: 0.7
+            on_press: root.onClickNext(root.viewType)
+            font_size: self.height - dp(24)
+
+
+
+
+<FullScreenWindow>:
+    name: "FULLSCREEN"
+    primary: primary_feed
+    BoxLayout:
+        orientation: "horizontal"
+
+        CamView:
+            id: primary_feed
+            viewType: TYPES.DisplaySelection.MainLeft
+
+
+<SplitScreenWindow>:
+    name: "SPLITSCREEN"
+    primary: primary_feed
+    secondary: secondary_feed
+    BoxLayout:
+        orientation: "horizontal"
+
+        CamView:
+            id: primary_feed
+            viewType: TYPES.DisplaySelection.MainLeft
+        CamView:
+            id: secondary_feed
+            viewType: TYPES.DisplaySelection.Right
