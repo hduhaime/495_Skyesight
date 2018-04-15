@@ -58,14 +58,7 @@ class Controller:
                     rightFrame, altText = self.model.getFeed(DisplaySelection.Right)
                     self.view.fxns.updatePanel(VideoSelection.Right, rightFrame, altText)
 
-
-
-                sensorToReadingMap = {
-                    CamList.Left: 1.3,
-                    CamList.Rear: 4.2,
-                    CamList.Right: 0.4
-
-                } #TODO: self.model.getReading()
+                sensorToReadingMap = self.model.getReading()
                 for key, value in sensorToReadingMap.items():
 
                     self.sensorMapLock.acquire()
@@ -77,7 +70,6 @@ class Controller:
                     # send distance notification to view if sensor is valid and in threshold
                     if self.sensorToIsValidMap[key] and self.distanceThreshold >= value:
                         self.view.fxns.sendDistanceNotification(key, value, camToNameMap[key])
-                        #TODO: do we want a queue with the closest distance at the highest priority?
 
                     self.sensorMapLock.release()
 
@@ -126,8 +118,18 @@ def main():
 
     sensorVals = {
         CamList.Left : {
-                        GPIO.TRIG: 4,
-                        GPIO.ECHO: 18
+                        GPIO.TRIG: 21,
+                        GPIO.ECHO: 26
+                    },
+
+        CamList.Rear: {
+                        GPIO.TRIG: 20,
+                        GPIO.ECHO: 19
+                    },
+
+        CamList.Right: {
+                        GPIO.TRIG: 16,
+                        GPIO.ECHO: 13
                     }
     }
     controller = Controller(view, leftCam, rightCam, rearCam, sensorVals)

@@ -3,7 +3,7 @@ from threading import Thread, Lock
 import requests
 
 TO_METRES = 0.01
-IP = "35.1.53.166"
+IP = "35.1.78.37:5000"
 class Sensor:
 
     def __init__(self, TRIG, ECHO):
