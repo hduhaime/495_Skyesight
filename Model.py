@@ -55,7 +55,6 @@ class Model:
 
         self.stitcher = Stitcher()
 
-        #TODO: Re-enable sensor code
         #Create the left sensor
         self.leftSensor = Sensor(sensorVals[CamList.Left][GPIO.TRIG], sensorVals[CamList.Left][GPIO.ECHO])
         self.rightSensor = Sensor(sensorVals[CamList.Right][GPIO.TRIG], sensorVals[CamList.Right][GPIO.ECHO])
@@ -74,6 +73,14 @@ class Model:
         self.leftCapture = leftCapture
         self.rightCapture = rightCapture
         self.rearCapture = rearCapture
+
+    def stop(self):
+        self.rightSensor.stop()
+        self.leftSensor.stop()
+        self.rearSensor.stop()
+        self.leftThread.join()
+        self.rightThread.join()
+        self.rearThread.join()
 
     def changeFeed(self, displaySelection, desiredCamSelection):
 

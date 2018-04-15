@@ -40,8 +40,9 @@ class Controller:
 
         view.initialize(buttonMap, buttonMapArgs)
 
-    def onClose(self):
+    def stop(self):
         self.continueRunning = False
+        self.model.stop()
 
     def run(self):
         while self.continueRunning:
@@ -60,6 +61,8 @@ class Controller:
 
                 sensorToReadingMap = self.model.getReading()
                 for key, value in sensorToReadingMap.items():
+                    if value is None:
+                        continue
 
                     self.sensorMapLock.acquire()
 
@@ -139,7 +142,7 @@ def main():
     view.run()
 
     # wait for controller run thread to end
-    controller.onClose()
+    controller.stop()
     controller_thread.join()
 
     leftCam.release()

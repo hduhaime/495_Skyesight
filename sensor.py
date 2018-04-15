@@ -7,11 +7,17 @@ IP = "35.1.78.37:5000"
 class Sensor:
 
     def __init__(self, TRIG, ECHO):
-        self.distance = 0
+        self.distance = None
+        self.stopSet = False
         self.mutex = Lock()
         self.threshold = 1
         self.TRIG = TRIG
         self.ECHO = ECHO
+
+    def stop(self):
+        self.mutex.acquire()
+        self.stopSet = True
+        self.mutex.release()
 
     def setThreshold(self, threshold):
 
@@ -26,7 +32,7 @@ class Sensor:
         self.mutex.acquire()
         
         try:
-            if self.distance < self.threshold:
+            if self.distance is not None and self.distance < self.threshold:
                 return self.distance
             else:
                 return None
@@ -35,9 +41,9 @@ class Sensor:
 
 
     def startSensors(self):
-        
-        while True:
-
+        self.mutex.acquire()
+        while self.stopSet:
+            self.mutex.release()
             #Call the API server running on python
             response = requests.post("http://"+IP+"/fetchSensorData", data={'TRIG':self.TRIG, 'ECHO':self.ECHO})
             if response.status_code == 200:
@@ -49,3 +55,7 @@ class Sensor:
                     self.distance = dist_in_metres
                 
                 self.mutex.release()
+
+            self.mutex.acquire()
+
+        self.mutex.release()
