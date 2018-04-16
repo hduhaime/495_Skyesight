@@ -27,7 +27,8 @@ class Controller:
             "onPrimaryPrev": lambda: self.pressPrev(DisplaySelection.MainLeft),
             "onPrimaryNext": lambda: self.pressNext(DisplaySelection.MainLeft),
             "onSecondaryPrev": lambda: self.pressPrev(DisplaySelection.Right),
-            "onSecondaryNext": lambda: self.pressNext(DisplaySelection.Right)
+            "onSecondaryNext": lambda: self.pressNext(DisplaySelection.Right),
+            "onPressSKey": self.toggleColorMode
         }
 
         buttonMapArgs = {
@@ -108,6 +109,10 @@ class Controller:
         else:
             self.isFullScreen = True
             self.view.fxns.makeFullScreen()
+
+
+    def toggleColorMode(self):
+        self.color = not self.color
 
 
 def main():

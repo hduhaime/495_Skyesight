@@ -4,6 +4,7 @@ kivy.require('1.9.0')
 from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.screenmanager import ScreenManager, Screen
+from kivy.core.window import Window
 
 from Util import DisplaySelection, VideoSelection
 
@@ -183,6 +184,8 @@ class viewApp(App):
         super(viewApp, self).__init__(**kwargs)
         self.fxns = None
         self._buttonMap = None
+        self._keyboard = Window.request_keyboard(self._keyboard_closed, self)
+        self._keyboard.bind(on_key_down=self._on_keyboard_down)
 
     def initialize(self, buttonMap, buttonMapArgs):
         self._buttonMap = buttonMap
@@ -194,7 +197,14 @@ class viewApp(App):
         VIEW_ROOT = self.fxns
         return self.fxns
 
+    def _keyboard_closed(self):
+        self._keyboard.unbind(on_key_down=self._on_keyboard_down)
+        self._keyboard = None
 
+    def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
+        if keycode[1] == 's':
+            self._buttonMap["onPressSKey"]()
+        return True
 
 #
 #           MISC. KIVY CLASSES
