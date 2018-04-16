@@ -15,6 +15,7 @@ class Controller:
         self.model = Model(leftCapture, rightCapture, rearCapture, sensorVals)
         self.notificationsMuted = False
         self.isFullScreen = True
+        self.color = False
         self.continueRunning = True
         self.sensorToIsValidMap = {CamList.Left: True, CamList.Right: True, CamList.Rear: True}
         self.distanceThreshold = 1.5 #TODO: change this to a global default value
@@ -46,18 +47,23 @@ class Controller:
 
     def run(self):
         while self.continueRunning:
+            #keyVal = cv2.waitKey(1)
+            #if keyVal & 0xFF == ord('b'):
+            #    self.color = not self.color
             if self.view.fxns:
 
-                frame, text = self.model.getFeed(DisplaySelection.MainLeft)
+                frame, text = self.model.getFeed(DisplaySelection.MainLeft, self.color)
+                if len(frame.shape) > 2 and not self.color:
+                    frame = cv2.cvtColor(frame, cv2.COLOR_BGRA2GRAY)
 
                 if self.isFullScreen:
-                    self.view.fxns.updatePanel(VideoSelection.Main, frame, text)
+                    self.view.fxns.updatePanel(VideoSelection.Main, frame, self.color, text)
 
                 if not self.isFullScreen:
-                    self.view.fxns.updatePanel(VideoSelection.Left, frame, text)
+                    self.view.fxns.updatePanel(VideoSelection.Left, frame, self.color, text)
 
                     rightFrame, altText = self.model.getFeed(DisplaySelection.Right)
-                    self.view.fxns.updatePanel(VideoSelection.Right, rightFrame, altText)
+                    self.view.fxns.updatePanel(VideoSelection.Right, rightFrame, self.color, altText)
 
                 sensorToReadingMap = self.model.getReading()
                 for key, value in sensorToReadingMap.items():

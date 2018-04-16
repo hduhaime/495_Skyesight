@@ -24,6 +24,7 @@ import cv2
 
 VIEW_ROOT = None
 
+COLOR = False
 
 class DistanceNotification(Popup):
     def __init__(self, camType, distance, label, **kwargs):
@@ -71,7 +72,6 @@ class VideoFeed(Image):
         self.next_frame = None
         self.next_text = None
         self.feed_lock = threading.Lock()
-        self.color = False
         Clock.schedule_interval(self.process_update, 1.0 / 15) #TODO: fps
 
     def process_update(self, dt):
@@ -90,7 +90,7 @@ class VideoFeed(Image):
 
         buf = buf1.tostring()
 
-        fmt = 'bgr' if self.color else 'luminance'
+        fmt = 'bgr' if COLOR else 'luminance'
 
         image_texture = Texture.create(
             size=(next_frame_shape[1], next_frame_shape[0]), colorfmt=fmt)
@@ -98,15 +98,14 @@ class VideoFeed(Image):
 
         self.texture = image_texture
 
-    def update_feed(self, frame, text):
+    def update_feed(self, frame, color, text):
         self.feed_lock.acquire()
         self.next_frame = frame
         self.next_text = text
+        global COLOR
+        COLOR = color
         self.feed_lock.release()
         return
-
-    def set_color(self, color):
-        self.color = color
 
 class Toolbar (BoxLayout):
     def __init__(self, **kwargs):
@@ -166,7 +165,7 @@ class WindowWrapper(BoxLayout):
         pass
 
     def updatePanel(self, videoSelection, image, color, text):
-        self.panelMap[videoSelection].video.update_feed(image, text)
+        self.panelMap[videoSelection].video.update_feed(image, color, text)
 
     def sendDistanceNotification(self, camType, distance, feedTitle):
 

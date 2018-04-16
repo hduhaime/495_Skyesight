@@ -107,7 +107,7 @@ class Model:
     def toggleNotifications(self, notificationsMuted):
         self.notificationsMuted = notificationsMuted
 
-    def getFeed(self, displaySelection):
+    def getFeed(self, displaySelection, color):
         # Get the needed feeds for the relevant display selection
         feedSelection = self.displayToFeedMap[displaySelection]
 
@@ -121,7 +121,7 @@ class Model:
                 if leftFeed is None or rightFeed is None or rearFeed is None:
                     return self.feedToDefaultMap[feedSelection], feedToTitleMap[feedSelection]
 
-                stitchedArray = self.stitcher.stitch([leftFeed, rearFeed, rightFeed])
+                stitchedArray = self.stitcher.stitch([leftFeed, rearFeed, rightFeed], color)
                 stitchedImage = stitchedArray
                 return stitchedImage, feedToTitleMap[feedSelection]
             except RuntimeError:

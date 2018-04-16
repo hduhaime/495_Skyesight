@@ -10,11 +10,11 @@ class Stitcher:
         self.hmatL = None
         self.hmatM = None
         self.hmatR = None
+        self.color = False
         self.ratio = 0.75
         self.reprojThresh = 4.0
 
     def prepare_for_calibration(self, img):
-
 
         #Canny
         #output.append(cv2.Canny(images, 100, 200)
@@ -22,10 +22,10 @@ class Stitcher:
         if img is None:
             raise RuntimeError("cannot calibrate because all feeds not available")
 
-        gray = cv2.cvtColor(img, cv2.COLOR_BGRA2GRAY)
-        #eq = cv2.equalizeHist(img)
-
-        return gray
+        if len(img.shape) > 2:
+            return cv2.cvtColor(img, cv2.COLOR_BGRA2GRAY)
+        else:
+            return img
 
     def calibrate(self):
         (kpL, ftL) = self.describe(self.imageL)
@@ -59,8 +59,9 @@ class Stitcher:
         self.hmatR = np.matmul(self.hmatM, H2)
 
 
-    def stitch(self, images, color = False):
+    def stitch(self, images, color):
         (self.imageL, self.imageM, self.imageR) = images
+        self.color = color
 
         max_dim = max(self.imageM.shape[0], self.imageM.shape[1])
         canvas_dim = max_dim * len(images)
@@ -69,7 +70,7 @@ class Stitcher:
         if self.hmatL is None or self.hmatR is None:
             self.calibrate()
 
-        if color:
+        if self.color:
             self.imageL[np.where((self.imageL==[0,0,0]).all(axis=2))] = [1,1,1]
             self.imageM[np.where((self.imageM==[0,0,0]).all(axis=2))] = [1,1,1]
             self.imageR[np.where((self.imageR==[0,0,0]).all(axis=2))] = [1,1,1]
@@ -86,12 +87,16 @@ class Stitcher:
         resultR = cv2.warpPerspective(self.imageR, self.hmatR, (canvas_dim, canvas_dim))
 
         canvas = resultR
-        canvas[resultL > 0] = resultL[resultL > 0]
-        canvas[resultM > 0] = resultM[resultM > 0]
+        if color:
+            canvas[np.where((resultL > [0,0,0]).any(axis=2))] = resultL[np.where((resultL > [0,0,0]).any(axis=2))]
+            canvas[np.where((resultM > [0,0,0]).any(axis=2))] = resultM[np.where((resultM > [0,0,0]).any(axis=2))]
+        else:
+            canvas[resultL > 0] = resultL[resultL > 0]
+            canvas[resultM > 0] = resultM[resultM > 0]
 
         # Crop out as much negative space as possible
         trim = canvas > 0
-        mat = np.array([[y[0] for y in x] for x in trim])
+        mat = np.array([[y[0] for y in x] for x in trim]) if self.color else trim
 
         cropped = canvas[np.ix_(mat.any(1), mat.any(0))]
 
