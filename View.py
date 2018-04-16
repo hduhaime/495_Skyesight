@@ -98,13 +98,15 @@ class VideoFeed(Image):
 
         self.texture = image_texture
 
-    def update_feed(self, frame, color, text):
+    def update_feed(self, frame, text):
         self.feed_lock.acquire()
         self.next_frame = frame
         self.next_text = text
-        self.color = color
         self.feed_lock.release()
         return
+
+    def set_color(self, color):
+        self.color = color
 
 class Toolbar (BoxLayout):
     def __init__(self, **kwargs):
@@ -163,7 +165,7 @@ class WindowWrapper(BoxLayout):
         #TODO:
         pass
 
-    def updatePanel(self, videoSelection, image, text):
+    def updatePanel(self, videoSelection, image, color, text):
         self.panelMap[videoSelection].video.update_feed(image, text)
 
     def sendDistanceNotification(self, camType, distance, feedTitle):
