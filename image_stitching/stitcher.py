@@ -23,11 +23,9 @@ class Stitcher:
             raise RuntimeError("cannot calibrate because all feeds not available")
 
         gray = cv2.cvtColor(img, cv2.COLOR_BGRA2GRAY)
-        eq = cv2.equalizeHist(gray)
+        #eq = cv2.equalizeHist(img)
 
-        output = eq
-
-        return output
+        return gray
 
     def calibrate(self):
         (kpL, ftL) = self.describe(self.imageL)
@@ -61,26 +59,27 @@ class Stitcher:
         self.hmatR = np.matmul(self.hmatM, H2)
 
 
-    def stitch(self, images):
+    def stitch(self, images, color = False):
         (self.imageL, self.imageM, self.imageR) = images
 
         max_dim = max(self.imageM.shape[0], self.imageM.shape[1])
         canvas_dim = max_dim * len(images)
 
-        #canvasA = np.zeros((canvas_dim, canvas_dim, 4), np.uint8)
-        #canvasB = np.zeros((canvas_dim, canvas_dim, 4), np.uint8)
-
         self.shift = [max_dim, max_dim]
         if self.hmatL is None or self.hmatR is None:
             self.calibrate()
 
-
-
-        #tmp = cv2.warpPerspective(imageL, hMat_LINV, (canvas_dim, canvas_dim))
-        #tmp[0:imageM.shape[0], 0:imageM.shape[1], :] = 0.5
-        #tmp[offsety:imageM.shape[0] + offsety, offsetx:imageM.shape[1] + offsetx] = imageM
-        #canvas = tmp
-
+        if color:
+            self.imageL[np.where((self.imageL==[0,0,0]).all(axis=2))] = [1,1,1]
+            self.imageM[np.where((self.imageM==[0,0,0]).all(axis=2))] = [1,1,1]
+            self.imageR[np.where((self.imageR==[0,0,0]).all(axis=2))] = [1,1,1]
+        else:
+            self.imageL = cv2.cvtColor(self.imageL, cv2.COLOR_BGRA2GRAY)
+            self.imageM = cv2.cvtColor(self.imageM, cv2.COLOR_BGRA2GRAY)
+            self.imageR = cv2.cvtColor(self.imageR, cv2.COLOR_BGRA2GRAY)
+            self.imageL[np.where(self.imageL == [0])] = [1]
+            self.imageM[np.where(self.imageM == [0])] = [1]
+            self.imageR[np.where(self.imageR == [0])] = [1]
 
         resultL = cv2.warpPerspective(self.imageL, self.hmatL, (canvas_dim, canvas_dim))
         resultM = cv2.warpPerspective(self.imageM, self.hmatM, (canvas_dim, canvas_dim))
@@ -93,25 +92,11 @@ class Stitcher:
         # Crop out as much negative space as possible
         trim = canvas > 0
         mat = np.array([[y[0] for y in x] for x in trim])
-        
+
         cropped = canvas[np.ix_(mat.any(1), mat.any(0))]
 
 
-        # canvasA[0:resultA.shape[0], 0:resultA.shape[1]] = resultA
-        # resultB_start = shift
-        # resultB_end = resultB_start + resultB.shape[1]
-        # canvasB[0:resultB.shape[0], resultB_start:resultB_end] = resultB
-        # canvasB[0:imageM.shape[0], shift:imageM.shape[1] + shift] = imageM
-        #
-        # canvasB[canvasA > 0] = 0
-
-        #TODO
-        #canvas = resultL
-        #canvas[resultR > 0] = resultR[resultR > 0]
-        #canvas[resultM > 0] = resultM[resultM > 0]
-        #canvasA + canvasB
-
-        return cv2.resize(cropped, None, fx=0.444444, fy=0.444444)
+        return cropped
 
     def get_homography(self, pts1, pts2, shift_x, shift_y, reprojThresh):
         #for pt in pts2:

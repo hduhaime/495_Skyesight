@@ -73,7 +73,7 @@ class VideoFeed(Image):
         self.feed_lock = threading.Lock()
         Clock.schedule_interval(self.process_update, 1.0 / 15) #TODO: fps
 
-    def process_update(self, dt):
+    def process_update(self, dt, color = False):
 
         #LOCKED
         self.feed_lock.acquire()
@@ -89,9 +89,11 @@ class VideoFeed(Image):
 
         buf = buf1.tostring()
 
+        fmt = 'bgr' if color else 'luminance'
+
         image_texture = Texture.create(
-            size=(next_frame_shape[1], next_frame_shape[0]), colorfmt='bgr')
-        image_texture.blit_buffer(buf, colorfmt='bgr', bufferfmt='ubyte')
+            size=(next_frame_shape[1], next_frame_shape[0]), colorfmt=fmt)
+        image_texture.blit_buffer(buf, colorfmt=fmt, bufferfmt='ubyte')
 
         self.texture = image_texture
 

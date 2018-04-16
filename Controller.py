@@ -120,9 +120,9 @@ def main():
 
     #For Henry's laptop: 0, 1, 2
 
-    leftCam = cv2.VideoCapture(0)
-    rightCam = cv2.VideoCapture(3)
-    rearCam = cv2.VideoCapture(2)
+    leftCam = cv2.VideoCapture(2)
+    rightCam = cv2.VideoCapture(1)
+    rearCam = cv2.VideoCapture(0)
 
     sensorVals = {
         CamList.Left : {
