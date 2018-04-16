@@ -39,10 +39,10 @@ class Model:
 
         prefix = os.path.join(os.getcwd(), 'defaultImages')
 
-        over = cv2.imread(os.path.join(prefix, 'overheadDefault.png'))
-        left = cv2.imread(os.path.join(prefix, 'leftDefault.png'))
-        right = cv2.imread(os.path.join(prefix, 'rightDefault.png'))
-        rear = cv2.imread(os.path.join(prefix, 'rearDefault.png'))
+        over = cv2.imread(os.path.join(prefix, 'overheadDefault.jpg'))
+        left = cv2.imread(os.path.join(prefix, 'leftDefault.jpg'))
+        right = cv2.imread(os.path.join(prefix, 'rightDefault.jpg'))
+        rear = cv2.imread(os.path.join(prefix, 'rearDefault.jpg'))
 
         self.feedToDefaultMap = {
             FeedSelections.Overhead: over,
