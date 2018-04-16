@@ -180,16 +180,10 @@ class Model:
         if not ret:
             return None
 
-<<<<<<< HEAD
         if frame.shape[0] != 480:
             frame = cv2.resize(frame, None, fx=0.444444, fy=0.444444)[:, 106:746, :]
 
         frame_to_display = undistort(frame) if fix_distortion else frame
-=======
-        frame_to_display = frame
-        if frame_to_display.shape[0] != 480:
-            frame_to_display = cv2.resize(frame_to_display, None, fx=0.444444, fy=0.444444)[:, 106:746, :]
->>>>>>> 456db3cdce75aa96a5c9dedb22d5c83c5faba88d
 
         return cv2.flip(frame_to_display, 1)
 
