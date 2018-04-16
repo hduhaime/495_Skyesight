@@ -17,6 +17,8 @@ class Controller:
         self.sensorToIsValidMap = {CamList.Left: True, CamList.Right: True, CamList.Rear: True}
         self.distanceThreshold = 1.5
         self.view = view
+        self.color_lock = threading.Lock()
+        self.distance_lock = threading.Lock()
 
         self.sensorMapLock = threading.Lock()
 
@@ -50,6 +52,8 @@ class Controller:
             #    self.color = not self.color
             if self.view.fxns:
 
+                self.color_lock.acquire()
+
                 frame, text = self.model.getFeed(DisplaySelection.MainLeft, self.color)
                 if len(frame.shape) > 2 and not self.color:
                     frame = cv2.cvtColor(frame, cv2.COLOR_BGRA2GRAY)
@@ -60,15 +64,20 @@ class Controller:
                 if not self.isFullScreen:
                     self.view.fxns.updatePanel(VideoSelection.Left, frame, self.color, text)
 
-                    rightFrame, altText = self.model.getFeed(DisplaySelection.Right)
+                    rightFrame, altText = self.model.getFeed(DisplaySelection.Right, self.color)
+                    if len(rightFrame.shape) > 2 and not self.color:
+                        rightFrame = cv2.cvtColor(rightFrame, cv2.COLOR_BGRA2GRAY)
                     self.view.fxns.updatePanel(VideoSelection.Right, rightFrame, self.color, altText)
 
+                self.color_lock.release()
+
+                self.sensorMapLock.acquire()
                 sensorToReadingMap = self.model.getReading()
                 for key, value in sensorToReadingMap.items():
                     if value is None:
                         continue
 
-                    self.sensorMapLock.acquire()
+
 
                     # make sensor valid again if we go out of threshold
                     if value > self.distanceThreshold and not self.sensorToIsValidMap[key]:
@@ -78,7 +87,7 @@ class Controller:
                     if self.sensorToIsValidMap[key] and self.distanceThreshold >= value:
                         self.view.fxns.sendDistanceNotification(key, value, camToNameMap[key])
 
-                    self.sensorMapLock.release()
+                self.sensorMapLock.release()
 
     def pressNext(self, displaySelection):
         self.model.nextFeed(displaySelection)
@@ -91,7 +100,9 @@ class Controller:
         self.model.changeFeed(DisplaySelection.MainLeft, desiredCamSelection)
 
     def changeDistanceThreshold(self, distance):
+        self.sensorMapLock.acquire()
         self.distanceThreshold = distance
+        self.sensorMapLock.relase()
 
     def toggleNotifications(self):
         self.model.toggleNotifications(self.notificationsMuted)
@@ -112,7 +123,9 @@ class Controller:
 
 
     def toggleColorMode(self):
+        self.color_lock.acquire()
         self.color = not self.color
+        self.color_lock.release()
 
 
 def main():
@@ -122,7 +135,7 @@ def main():
     #For Henry's laptop: 0, 1, 2
 
     leftCam = cv2.VideoCapture(2)
-    rightCam = cv2.VideoCapture(1)
+    rightCam = cv2.VideoCapture(3)
     rearCam = cv2.VideoCapture(0)
 
     sensorVals = {

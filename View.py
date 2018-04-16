@@ -16,6 +16,9 @@ from kivy.clock import Clock
 from kivy.graphics.texture import Texture
 from kivy.uix.popup import Popup
 
+from kivy.config import Config
+Config.set('kivy', 'keyboard_mode', 'systemandmulti')
+
 import cv2
 
 VIEW_ROOT = None
@@ -130,6 +133,8 @@ class Toolbar (BoxLayout):
 class WindowWrapper(BoxLayout):
     def __init__(self, buttonMap, buttonMapArgs, **kwargs):
         super(WindowWrapper, self).__init__(**kwargs)
+        self._keyboard = Window.request_keyboard(self._keyboard_closed, self)
+        self._keyboard.bind(on_key_down=self._on_keyboard_down)
 
         self.panelMap = {
             VideoSelection.Main: self.primary_full,
@@ -140,6 +145,15 @@ class WindowWrapper(BoxLayout):
         self._buttonMap = buttonMap
         self._buttonMapArgs = buttonMapArgs
         self.popup = None
+
+    def _keyboard_closed(self):
+        self._keyboard.unbind(on_key_down=self._on_keyboard_down)
+        self._keyboard = None
+
+    def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
+        if keycode[1] == 's':
+            VIEW_ROOT.registerButtonPress("onPressSKey")
+        return True
 
 
     def registerButtonPress(self, eventName):
@@ -184,8 +198,7 @@ class viewApp(App):
         super(viewApp, self).__init__(**kwargs)
         self.fxns = None
         self._buttonMap = None
-        self._keyboard = Window.request_keyboard(self._keyboard_closed, self)
-        self._keyboard.bind(on_key_down=self._on_keyboard_down)
+
 
     def initialize(self, buttonMap, buttonMapArgs):
         self._buttonMap = buttonMap
@@ -196,15 +209,6 @@ class viewApp(App):
         self.fxns = WindowWrapper(self._buttonMap, self._buttonMapArgs)
         VIEW_ROOT = self.fxns
         return self.fxns
-
-    def _keyboard_closed(self):
-        self._keyboard.unbind(on_key_down=self._on_keyboard_down)
-        self._keyboard = None
-
-    def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
-        if keycode[1] == 's':
-            self._buttonMap["onPressSKey"]()
-        return True
 
 #
 #           MISC. KIVY CLASSES

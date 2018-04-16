@@ -172,7 +172,7 @@ class Model:
 
     @staticmethod
     def getWebcamFrame(capture, fix_distortion = True):
-        ret, frame = capture.read()
+        ret, frame = capture.retrieve()
 
         if not ret:
             return None
