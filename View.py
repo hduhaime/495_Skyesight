@@ -2,14 +2,10 @@ import kivy
 kivy.require('1.9.0')
 
 from kivy.app import App
-from kivy.lang import Builder
 from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.gridlayout import GridLayout
 from kivy.uix.screenmanager import ScreenManager, Screen
-from kivy.properties import ObjectProperty
 
-from Util import OnScreenButtons
-from Util import DisplaySelection, VideoSelection, CamList
+from Util import DisplaySelection, VideoSelection
 
 import threading
 
@@ -19,7 +15,6 @@ from kivy.clock import Clock
 from kivy.graphics.texture import Texture
 from kivy.uix.popup import Popup
 
-#TODO:
 import cv2
 
 VIEW_ROOT = None
@@ -72,7 +67,7 @@ class VideoFeed(Image):
         self.next_frame = None
         self.next_text = None
         self.feed_lock = threading.Lock()
-        Clock.schedule_interval(self.process_update, 1.0 / 15) #TODO: fps
+        Clock.schedule_interval(self.process_update, 1.0 / 15)
 
     def process_update(self, dt):
 
@@ -161,7 +156,6 @@ class WindowWrapper(BoxLayout):
         self.manager.current = "SPLITSCREEN"
 
     def toggleNotifications(self, muted):
-        #TODO:
         pass
 
     def updatePanel(self, videoSelection, image, color, text):

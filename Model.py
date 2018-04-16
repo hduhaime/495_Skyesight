@@ -51,9 +51,6 @@ class Model:
             FeedSelections.Rear: rear
         }
 
-        #.resize(400,300) #TODO: Resize
-
-
         self.stitcher = Stitcher()
 
         #Create the left sensor

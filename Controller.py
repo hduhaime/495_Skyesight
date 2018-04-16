@@ -3,22 +3,19 @@ import cv2
 
 from Model import Model
 from View import viewApp as View
-from Model import GPIO
 from Util import *
 import threading
 
-#TODO
-from random import *
 
 class Controller:
     def __init__(self, view, leftCapture, rightCapture, rearCapture, sensorVals):
         self.model = Model(leftCapture, rightCapture, rearCapture, sensorVals)
         self.notificationsMuted = False
         self.isFullScreen = True
-        self.color = False
+        self.color = True
         self.continueRunning = True
         self.sensorToIsValidMap = {CamList.Left: True, CamList.Right: True, CamList.Rear: True}
-        self.distanceThreshold = 1.5 #TODO: change this to a global default value
+        self.distanceThreshold = 1.5
         self.view = view
 
         self.sensorMapLock = threading.Lock()
@@ -113,8 +110,6 @@ class Controller:
             self.view.fxns.makeFullScreen()
 
 
-
-controller = None #TODO: ensure this doesn't cause controller_thread to go out of scope
 def main():
 
     view = View()
