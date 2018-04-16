@@ -56,18 +56,32 @@ class Model:
 
         self.stitcher = Stitcher()
 
-        #TODO: Re-enable sensor code
         #Create the left sensor
-        # self.leftSensor = Sensor(sensorVals[CamList.Left][GPIO.TRIG], sensorVals[CamList.Left][GPIO.ECHO])
-        #
-        # #Run a thread to start the readings
-        # t = Thread(target = self.leftSensor.startSensors)
-        # t.start()
+        self.leftSensor = Sensor(sensorVals[CamList.Left][GPIO.TRIG], sensorVals[CamList.Left][GPIO.ECHO])
+        self.rightSensor = Sensor(sensorVals[CamList.Right][GPIO.TRIG], sensorVals[CamList.Right][GPIO.ECHO])
+        self.rearSensor = Sensor(sensorVals[CamList.Rear][GPIO.TRIG], sensorVals[CamList.Rear][GPIO.ECHO])
+
+        #Run a thread to start the readings
+        self.leftThread = Thread(target = self.leftSensor.startSensors)
+        self.rightThread = Thread(target = self.rightSensor.startSensors)
+        self.rearThread = Thread(target=self.rearSensor.startSensors)
+
+        self.leftThread.start()
+        self.rightThread.start()
+        self.rearThread.start()
 
         self.notificationsMuted = False
         self.leftCapture = leftCapture
         self.rightCapture = rightCapture
         self.rearCapture = rearCapture
+
+    def stop(self):
+        self.rightSensor.stop()
+        self.leftSensor.stop()
+        self.rearSensor.stop()
+        self.leftThread.join()
+        self.rightThread.join()
+        self.rearThread.join()
 
     def changeFeed(self, displaySelection, desiredCamSelection):
 
@@ -146,25 +160,18 @@ class Model:
             return {}
 
         readings = {
-            CamList.Left: self.leftSensor.getReading()
-        }
-
-        '''
-        readings = {
             CamList.Left: self.leftSensor.getReading(),
             CamList.Right: self.rightSensor.getReading(),
             CamList.Rear: self.rearSensor.getReading(),
 
         }
-        '''
 
         return readings
 
     def setThreshold(self, threshold):
-        leftSensor.setThreshold(threshold)
-
-        #rightSensor.setThreshold(threshold)
-        #rearSensor.setThreshold(threshold)
+        self.leftSensor.setThreshold(threshold)
+        self.rightSensor.setThreshold(threshold)
+        self.rearSensor.setThreshold(threshold)
 
     @staticmethod
     def getWebcamFrame(capture, fix_distortion = True):
@@ -173,10 +180,16 @@ class Model:
         if not ret:
             return None
 
+<<<<<<< HEAD
         if frame.shape[0] != 480:
             frame = cv2.resize(frame, None, fx=0.444444, fy=0.444444)[:, 106:746, :]
 
         frame_to_display = undistort(frame) if fix_distortion else frame
+=======
+        frame_to_display = frame
+        if frame_to_display.shape[0] != 480:
+            frame_to_display = cv2.resize(frame_to_display, None, fx=0.444444, fy=0.444444)[:, 106:746, :]
+>>>>>>> 456db3cdce75aa96a5c9dedb22d5c83c5faba88d
 
         return cv2.flip(frame_to_display, 1)
 
