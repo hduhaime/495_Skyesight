@@ -67,7 +67,7 @@ class Model:
         self.rightThread.start()
         self.rearThread.start()
 
-        self.notificationsMuted = False
+        self.notificationsMuted = True
         self.leftCapture = leftCapture
         self.rightCapture = rightCapture
         self.rearCapture = rearCapture
@@ -113,7 +113,7 @@ class Model:
             try:
                 leftFeed = self.getWebcamFrame(self.leftCapture)
                 rightFeed = self.getWebcamFrame(self.rightCapture)
-                rearFeed = self.getWebcamFrame(self.rearCapture, False)
+                rearFeed = self.getWebcamFrame(self.rearCapture)
 
                 if leftFeed is None or rightFeed is None or rearFeed is None:
                     return self.feedToDefaultMap[feedSelection], feedToTitleMap[feedSelection]

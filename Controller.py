@@ -10,7 +10,7 @@ import threading
 class Controller:
     def __init__(self, view, leftCapture, rightCapture, rearCapture, sensorVals):
         self.model = Model(leftCapture, rightCapture, rearCapture, sensorVals)
-        self.notificationsMuted = False
+        self.notificationsMuted = True
         self.isFullScreen = True
         self.color = True
         self.continueRunning = True
@@ -102,9 +102,10 @@ class Controller:
     def changeDistanceThreshold(self, distance):
         self.sensorMapLock.acquire()
         self.distanceThreshold = distance
-        self.sensorMapLock.relase()
+        self.sensorMapLock.release()
 
     def toggleNotifications(self):
+        self.notificationsMuted = not self.notificationsMuted
         self.model.toggleNotifications(self.notificationsMuted)
         self.view.fxns.toggleNotifications(self.notificationsMuted)
 
